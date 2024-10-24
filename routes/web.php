@@ -3,34 +3,47 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EmergencyController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
 | Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
+| routes are loaded by the RouteServiceProvider and all of them will be
+| assigned to the "web" middleware group. Make something great!
+|--------------------------------------------------------------------------
 */
 
+// Default Route - Welcome Page
 Route::get('/', function () {
     return view('welcome');
 });
 
+// Authentication Routes (Login, Register, Password Reset, etc.)
 Auth::routes();
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// Dashboard Route - After Login (Home Page)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-// Authentication routes (login, register, password reset, etc.)
-Auth::routes();
+    // Room Routes
 
-// Route to the home page after login
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+    // Emergency Reporting Routes
 
-// Invite Routes
-Route::get('/invite', function () {
-    return view('invite'); // Display invite form
-})->name('invite.form');
-
+Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+Route::post('/emergency/report', [EmergencyController::class, 'submitReport']);
+// Route to handle form submission (POST request)
+Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
+    // Invite Routes
+Route::get('/invite', [InviteController::class, 'showForm'])->name('invite.form');
 Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
+    Route::get('/invite', function () {
+        return view('invite'); // Invite Form
+    })->name('invite.form');
+    Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
+});
+
