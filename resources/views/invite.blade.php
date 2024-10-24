@@ -1,0 +1,45 @@
+{{ route('invite') }}
+
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Invite Someone</div>
+
+                <div class="card-body">
+                    <form action="{{ route('invite') }}" method="POST">
+                        @csrf
+
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cell_number" class="form-label">Cell Number</label>
+                            <input type="text" class="form-control" id="cell_number" name="cell_number" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email (Optional)</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Send Invite</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
