@@ -1,0 +1,1 @@
+/home/fastcto/scripts/phcc.sh

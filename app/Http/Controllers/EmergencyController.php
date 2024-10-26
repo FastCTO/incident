@@ -3,23 +3,36 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Room;
+use App\Models\User;
+use App\Models\Emergency;
+use App\Models\SchoolInfo;
+use SinchSMS;
 
-class EmergencyController extends Controller
+class EmergencyController extends Controller  // Change from BaseController to Controller
 {
-    // Method to display the emergency reporting form
     public function report()
     {
-        return view('emergency.report');  // Make sure this view exists
+        $school = SchoolInfo::first();
+        $rooms = Room::all();
+        $roomLeaders = User::where('room_leader', true)->get();
+
+        return view('emergency.report', compact('school', 'rooms', 'roomLeaders'));
     }
 
-    // Store the emergency report (optional for submission)
     public function store(Request $request)
     {
-	     $request->validate([
-            'description' => 'required|string',
+        $validated = $request->validate([
+            'emergency_type' => 'required',
+            'description' => 'required|string|max:255',
+            'reporting_phone' => 'required|string',
+            'reporting_user_id' => 'required|exists:users,id',
+            'room_occupancy' => 'required|integer',
+            'school_occupancy' => 'required|integer',
         ]);
 
-        // Handle the submission logic here
+        Emergency::create($validated);
+
         return redirect()->route('home')->with('status', 'Emergency reported successfully!');
     }
 }

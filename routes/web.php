@@ -28,14 +28,26 @@ Auth::routes();
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
+    // tessting route
+      Route::get('/test-school-info', function () {
+    $school = \App\Models\SchoolInfo::first();
+    return $school ? $school->toArray() : 'No school info found';
+});
+
     // Room Routes
 
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
     // Emergency Reporting Routes
 
-Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
-Route::post('/emergency/report', [EmergencyController::class, 'submitReport']);
+//Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+//Route::post('/emergency/report', [EmergencyController::class, 'submitReport']);
+//Route::post('/emergency/store', [EmergencyController::class, 'store'])->name('emergency.store');
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+    Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
+});
+
 // Route to handle form submission (POST request)
 Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
     // Invite Routes
