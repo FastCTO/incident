@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Log;
 
 class InviteController extends Controller
 {
+	   public function showForm()
+    {
+        return view('invite'); // Ensure this view exists in resources/views/invite.blade.php
+    }
 	public function sendInvite(Request $request)
 {
     Log::info('sendInvite() called');  // Confirm function is called
