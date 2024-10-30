@@ -17,9 +17,15 @@ use App\Http\Controllers\EmergencyController;
 */
 
 // Default Route - Welcome Page
-Route::get('/', function () {
+/*Route::get('/', function () {
     return view('welcome');
 });
+ */
+
+Route::get('/', function () {
+    return redirect('/login');
+});
+
 
 // Authentication Routes (Login, Register, Password Reset, etc.)
 Auth::routes();
@@ -38,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+Route::get('/api/rooms', function () {
+    return App\Models\Room::all();
+    });
+
     // Emergency Reporting Routes
 
 //Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');

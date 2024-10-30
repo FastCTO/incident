@@ -9,6 +9,6 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'floor', 'capacity', 'occupied'];
+    protected $fillable = ['room_number', 'occupancy', 'capacity', 'occupied'];
 }
 
