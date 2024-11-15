@@ -1,10 +1,10 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\GuestController;
 
 // Redirect root to login page
 Route::get('/', function () {
@@ -22,10 +22,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Room Management Routes
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
-    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
-    Route::get('/api/rooms', function () {
-        return \App\Models\Room::all();  // API to fetch all rooms
-    });
+    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show'); // Corrected: GET route for room details
+    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy'); // PUT route for updating occupancy
 
     // Emergency Reporting Routes
     Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
@@ -35,11 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/invite', [InviteController::class, 'showForm'])->name('invite.form');
     Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
 
-    // Placeholder: Test Route for School Info
-    Route::get('/test-school-info', function () {
-        $school = \App\Models\SchoolInfo::first();
-        return $school ? $school->toArray() : 'No school info found';
-    });
-
+    // Guest Management Route
+    Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
 });
 

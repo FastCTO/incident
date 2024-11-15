@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="2915ff23-0ee9-4ce4-ae11-a72bd16c0cb3" name="school.fsv.io" url="http://school.fsv.io">
+        <fileTransfer accessType="SFTP" host="school.fsv.io" port="22" sshConfigId="ef09164f-6b0b-45e0-af50-a62f0ebdf7a4" sshConfig="fastcto@school.fsv.io:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
