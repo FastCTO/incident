@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Guardian Cloud') }}</title> <!-- Updated title -->
+    <title>Guardian Cloud</title> <!-- Updated title -->
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
