@@ -9,6 +9,8 @@
 
     <title>Guardian Cloud</title> <!-- Updated title -->
 
+    <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
+
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
