@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Guardian Cloud</title> <!-- Updated title -->
+    <title>Guardian Cloud</title>
 
     <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
 
@@ -51,7 +51,7 @@
                             <a class="nav-link" href="{{ route('invite.form') }}">Send Invite</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Maps</a> <!-- Placeholder -->
+                            <a class="nav-link" href="{{ url('/maps') }}">Maps</a> <!-- Fixed "Maps" link -->
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">School Management</a> <!-- Placeholder -->

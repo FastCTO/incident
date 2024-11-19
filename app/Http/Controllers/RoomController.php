@@ -2,8 +2,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
-use App\Models\User; // Correct import for the User model
+use App\Models\User; // Import the User model
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
 
 class RoomController extends Controller
 {
@@ -24,7 +26,23 @@ class RoomController extends Controller
 
         return view('rooms.show', compact('room', 'roomLeaders'));
     }
+      public function apiIndex(): JsonResponse
+    {
+        // Fetch all rooms from the database
+        $rooms = Room::all();
 
+        // Return the rooms as JSON
+        return response()->json($rooms);
+    }
+     public function maps()
+    {
+        $rooms = Room::all(); // Fetch all rooms for the map
+
+        // Calculate total occupancy
+        $totalOccupancy = $rooms->sum('current_occupancy');
+
+        return view('maps.index', compact('rooms', 'totalOccupancy'));
+    }
     public function updateOccupancy(Request $request, $id)
     {
         // Validate the incoming data
@@ -40,4 +58,3 @@ class RoomController extends Controller
         return redirect()->route('rooms.show', $room->id)->with('success', 'Occupancy updated successfully.');
     }
 }
-

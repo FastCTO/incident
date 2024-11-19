@@ -22,8 +22,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Room Management Routes
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
-    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show'); // Corrected: GET route for room details
-    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy'); // PUT route for updating occupancy
+    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');
 
     // Emergency Reporting Routes
     Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
@@ -35,5 +35,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Guest Management Route
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+    //map rout
+    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
 });
 
