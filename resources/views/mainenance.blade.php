@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        h1 {
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Guardian Cloud will be back soon!</h1>
+    <p>Our site is currently GETTING BETTER :)</p>
+    <p>Thank you for your patience.</p>
+</body>
+</html>
+

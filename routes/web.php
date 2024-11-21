@@ -1,24 +1,29 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\InviteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\GuestController;
 
-// Redirect root to login page
-Route::get('/', function () {
-    return redirect('/login');
-});
 
-// Authentication Routes (Login, Register, Password Reset)
-Auth::routes();
+if (App::isDownForMaintenance()) {
+    Route::view('/', 'maintenance');
+}
+
+// Redirect users with room assignments to the dashboard
+Route::get('/', function () {
+    return redirect()->route('home');
+});
 
 // Routes that require user authentication
 Route::middleware(['auth'])->group(function () {
-
     // Home/Dashboard Route
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Room Management Routes
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
@@ -35,7 +40,18 @@ Route::middleware(['auth'])->group(function () {
 
     // Guest Management Route
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
-    //map rout
-    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+    // Map Route
+Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+
+// Logout Route
+Route::post('/logout', function () {
+    \Illuminate\Support\Facades\Auth::logout();
+    return redirect('/'); // Redirect to the homepage after logout
+})->name('logout');
+
+
 });
+
+// Authentication Routes
+Auth::routes();
 

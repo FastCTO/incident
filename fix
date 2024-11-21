@@ -1,0 +1,164 @@
+<?php
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\InviteController;
+use App\Http\Controllers\GuestController;
+
+// Redirect users with room assignments to the dashboard
+Route::get('/', function () {
+    return redirect()->route('home');
+});
+
+// Routes that require user authentication
+Route::middleware(['auth'])->group(function () {
+    // Home/Dashboard Route
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
+    // Room Management Routes
+    Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');
+
+    // Emergency Reporting Routes
+    Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+    Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
+
+    // Invite Management Routes
+    Route::get('/invite', [InviteController::class, 'showForm'])->name('invite.form');
+    Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
+
+    // Guest Management Route
+    Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+
+    // Map Route
+    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+    Route::post('/logout', function () {
+    Auth::routes();
+    Auth::logout();
+    return redirect('/');
+})->name('logout');
+});
+
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\Auth;
+
+class HomeController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+
+        if ($user->current_room) {
+            return redirect()->route('dashboard'); // Redirect if the user has a room
+        }
+
+        return redirect()->route('dashboard'); // For consistency, we use the same dashboard
+    }
+}
+
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\SchoolInfo;
+use App\Models\Room;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+	     // Get school information
+        $school = SchoolInfo::first(); // Assuming a single school record exists
+        $occupiedRooms = Room::where('status', 'occupied')->count();
+        $totalOccupancy = Room::sum('current_occupancy');
+        $emergencyStatus = $school->status; // 'status' column indicating emergency state
+
+        return view('dashboard', [
+            'school' => $school,
+            'occupiedRooms' => $occupiedRooms,
+            'totalOccupancy' => $totalOccupancy,
+            'emergencyStatus' => $emergencyStatus,
+            'userRoom' => $user->current_room,
+            'isRoomLeader' => $user->room_leader,
+        ]);
+    }
+}
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">{{ __('Guardian Cloud Dashboard') }}</div>
+
+                <div class="card-body">
+                    @if (session('status'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+
+                    <p>{{ __('Welcome to Guardian Cloud!') }}</p>
+                    <p>{{ __("You don't have a room assigned. Please request a room from your administrator:") }}</p>
+
+                    <ul>
+                        <li><a href="{{ route('rooms.index') }}">{{ __('View Rooms') }}</a></li>
+                        <li><a href="{{ route('emergency.report') }}">{{ __('Report Emergency') }}</a></li>
+                        <li><a href="{{ route('invite.form') }}">{{ __('Send Invite') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="text-center mb-4">
+        <img src="{{ asset('images/school.jpg') }}" alt="School" style="width: 100%; max-width: 500px;">
+        <h1>{{ $school->name }}</h1>
+        <p>{{ $school->address }}</p>
+    </div>
+
+    <div class="row text-center">
+        <div class="col-md-4">
+            <h3>{{ $occupiedRooms }}</h3>
+            <p>Occupied Rooms</p>
+        </div>
+        <div class="col-md-4">
+            <h3>{{ $totalOccupancy }}</h3>
+            <p>Total People</p>
+        </div>
+        <div class="col-md-4">
+            <h3>{{ $emergencyStatus == 'emergency' ? 'Emergency' : 'Normal' }}</h3>
+            <p>Status</p>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        @if ($isRoomLeader)
+            <a href="{{ route('rooms.show', ['id' => $userRoom]) }}" class="btn btn-primary">Go to My Room</a>
+        @endif
+        <a href="{{ route('emergency.report') }}" class="btn btn-danger">Report Emergency</a>
+    </div>
+</div>
+@endsection
+
+dashboard.blade.php is in resources/views/dashboard/dashboard.blade.php

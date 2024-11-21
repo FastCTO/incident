@@ -15,13 +15,11 @@
                     @endif
 
                     <p>{{ __('Welcome to Guardian Cloud!') }}</p>
-                    <p>{{ __('Select an action to get started:') }}</p>
+                    <p>{{ __("You don't have a room assigned. Please contact your administrator.") }}</p>
 
-                    <ul>
-                        <li><a href="{{ route('rooms.index') }}">View Rooms</a></li>
-                        <li><a href="{{ route('emergency.report') }}">Report Emergency</a></li>
-                        <li><a href="{{ route('invite.form') }}">Send Invite</a></li>
-                    </ul>
+                    <div class="text-center">
+                        <a href="{{ route('emergency.report') }}" class="btn btn-danger">Report Emergency</a>
+                    </div>
                 </div>
             </div>
         </div>
