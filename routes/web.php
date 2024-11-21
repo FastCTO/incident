@@ -1,14 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\EmergencyController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\GuestController;
-
+use App\Http\Controllers\SchoolManagementController;
 
 if (App::isDownForMaintenance()) {
     Route::view('/', 'maintenance');
@@ -40,16 +39,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Guest Management Route
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+
     // Map Route
-Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
 
-// Logout Route
-Route::post('/logout', function () {
-    \Illuminate\Support\Facades\Auth::logout();
-    return redirect('/'); // Redirect to the homepage after logout
-})->name('logout');
+    // School Management Route
+    Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school.management');
+    Route::put('/school-management/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
 
-
+    // Logout Route
+    Route::post('/logout', function () {
+        \Illuminate\Support\Facades\Auth::logout();
+        return redirect('/'); // Redirect to the homepage after logout
+    })->name('logout');
 });
 
 // Authentication Routes
