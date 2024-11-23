@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -7,6 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class SchoolManagementController extends Controller
 {
+    /**
+     * Display the School Management Dashboard.
+     */
     public function index()
     {
         $school = SchoolInfo::first(); // Assuming a single school record exists
@@ -16,6 +20,9 @@ class SchoolManagementController extends Controller
         ]);
     }
 
+    /**
+     * Update the school security status.
+     */
     public function update(Request $request)
     {
         $validated = $request->validate([

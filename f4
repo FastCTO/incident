@@ -1,0 +1,189 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\InviteController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\SchoolManagementController;
+
+if (App::isDownForMaintenance()) {
+    Route::view('/', 'maintenance');
+}
+
+// Redirect users with room assignments to the dashboard
+Route::get('/', function () {
+    return redirect()->route('home');
+});
+
+// Routes that require user authentication
+Route::middleware(['auth'])->group(function () {
+    // Home/Dashboard Route
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Room Management Routes
+    Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');  // Update route
+    Route::put('/rooms/{id}/occupancy', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');
+
+    // Emergency Reporting Routes
+    Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+    Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
+
+    // Invite Management Routes
+    Route::get('/invite', [InviteController::class, 'showForm'])->name('invite.form');
+    Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
+
+    // Guest Management Route
+    Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+
+    // Map Route
+    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+
+    // School Management Route
+    Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school.management');
+    Route::put('/school-management/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
+
+    // Logout Route
+    Route::post('/logout', function () {
+        \Illuminate\Support\Facades\Auth::logout();
+        return redirect('/'); // Redirect to the homepage after logout
+    })->name('logout');
+});
+
+// Authentication Routes
+Auth::routes();
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Room;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+class RoomController extends Controller
+{
+    public function index()
+    {
+        $rooms = Room::all(); // Fetch all rooms
+        return view('rooms.index', compact('rooms')); // Pass rooms to the view
+    }
+
+    public function show($id)
+    {
+        $room = Room::findOrFail($id);
+        $roomLeaders = User::where('room_leader', true)
+            ->where('home_room', $room->room_number)
+            ->get();
+
+        return view('rooms.show', compact('room', 'roomLeaders'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'current_occupancy' => 'required|integer|min:0',
+            'status' => 'required|in:sheltered in place,need medical help,evac-safe,empty,Tornado Shelter,Evacuate Outside,All Safe',
+        ]);
+
+        $room = Room::findOrFail($id);
+        $room->update([
+            'current_occupancy' => $request->input('current_occupancy'),
+            'status' => $request->input('status'),
+        ]);
+
+        Log::info('Room updated: ' . $room->id);
+
+        return redirect()->route('rooms.index')->with('status', 'Room updated successfully.');
+    }
+
+    public function updateOccupancy(Request $request, $id)
+    {
+        $request->validate([
+            'current_occupancy' => 'required|integer|min:0|max:30',
+        ]);
+
+        $room = Room::findOrFail($id);
+        $room->current_occupancy = $request->input('current_occupancy');
+        $room->save();
+
+        return redirect()->route('rooms.show', $room->id)->with('success', 'Occupancy updated successfully.');
+    }
+}
+public function show($id)
+{
+    // Fetch the room by its ID
+    $room = Room::findOrFail($id);
+
+    // Fetch users who are marked as room leaders for this room
+    $roomLeaders = User::where('room_leader', true)
+        ->where('home_room', $room->room_number)
+        ->get();
+
+    // Return the view for the room details
+    return view('rooms.show', compact('room', 'roomLeaders'));
+}
+
+public function maps()
+{
+    $rooms = Room::all(); // Fetch all rooms for the map
+    $totalOccupancy = $rooms->sum('current_occupancy'); // Calculate total occupancy
+
+    return view('maps.index', compact('rooms', 'totalOccupancy'));
+}
+
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>Room: {{ $room->room_number }}</h1>
+    <h3>Room Leaders</h3>
+    @if ($roomLeaders->isEmpty())
+        <p>No room leaders assigned yet.</p>
+    @else
+        <ul>
+            @foreach ($roomLeaders as $leader)
+                <li>{{ $leader->name }} ({{ $leader->email }})</li>
+            @endforeach
+        </ul>
+    @endif
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>Rooms</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Status</th>
+                <th>Occupancy</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($rooms as $room)
+                <tr>
+                    <td>{{ $room->room_number }}</td>
+                    <td>{{ $room->status }}</td>
+                    <td>{{ $room->current_occupancy }}</td>
+                    <td>
+                        <a href="{{ route('rooms.show', $room->id) }}" class="btn btn-primary">View</a>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endsection
+

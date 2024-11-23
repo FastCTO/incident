@@ -2,23 +2,29 @@
 
 @section('content')
 <div class="container">
-    <h1>Rooms Dashboard</h1>
-    <div class="row">
-        @foreach ($rooms as $room)
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-header">
-                        Room: {{ $room->room_number }}
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Occupancy:</strong> {{ $room->current_occupancy }} people</p>
-                        <p><a href="{{ route('rooms.show', $room->id) }}" class="btn btn-primary">View Details</a></p>
-                    </div>
-                </div>
-            </div>
-        @endforeach
-    </div>
+    <h1>Rooms</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Status</th>
+                <th>Occupancy</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($rooms as $room)
+                <tr>
+                    <td>{{ $room->room_number }}</td>
+                    <td>{{ $room->status }}</td>
+                    <td>{{ $room->current_occupancy }}</td>
+                    <td>
+                        <a href="{{ route('rooms.show', $room->id) }}" class="btn btn-primary">View</a>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 </div>
 @endsection
-
 

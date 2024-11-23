@@ -1,0 +1,570 @@
+File: database/migrations/2014_10_12_000000_create_users_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+};
+
+---
+
+File: database/migrations/2014_10_12_100000_create_password_resets_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('password_resets', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('password_resets');
+    }
+};
+
+---
+
+File: database/migrations/2014_10_12_100000_create_password_reset_tokens_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('password_reset_tokens');
+    }
+};
+
+---
+
+File: database/migrations/2019_08_19_000000_create_failed_jobs_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
+            $table->longText('payload');
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('failed_jobs');
+    }
+};
+
+---
+
+File: database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('tokenable');
+            $table->string('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('personal_access_tokens');
+    }
+};
+
+---
+
+File: database/migrations/2024_10_23_153207_add_columns_to_users_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddColumnsToUsersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('title')->nullable();
+            $table->string('role')->default('user');
+            $table->tinyInteger('emerg_notify')->default(0);
+            $table->string('current_room', 50)->nullable();
+            $table->string('home_room', 50)->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn([
+                'title', 
+                'role', 
+                'emerg_notify', 
+                'current_room', 
+                'home_room'
+            ]);
+        });
+    }
+}
+
+
+---
+
+File: database/migrations/2024_10_23_165245_add_first_and_last_name_to_invites_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+    o */
+       public function up(): void
+    {
+	     Schema::create('invites', function (Blueprint $table) {
+        $table->id();
+        $table->string('first_name');
+        $table->string('last_name');
+        $table->string('email')->nullable();  // Email is optional
+        $table->string('cell_number');  // For SMS invites
+        $table->unsignedBigInteger('invited_by');  // References the user sending the invite
+        $table->string('token')->unique();
+        $table->boolean('accepted')->default(false);
+        $table->timestamp('expires_at')->nullable();
+        $table->timestamps();
+
+        // Add foreign key to the 'users' table
+        $table->foreign('invited_by')->references('id')->on('users')->onDelete('cascade');
+    });
+    }
+
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('invites', function (Blueprint $table) {
+            //
+        });
+    }
+};
+
+---
+
+File: database/migrations/2024_10_25_133713_add_room_leader_to_users_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+	public function up()
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->boolean('room_leader')->default(false);
+    });
+}
+
+public function down()
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->dropColumn('room_leader');
+    });
+}
+
+};
+
+---
+
+File: database/migrations/2024_10_25_133954_create_school_info_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+
+	public function up()
+{
+    Schema::create('school_info', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('address');
+        $table->decimal('latitude', 10, 7);
+        $table->decimal('longitude', 10, 7);
+        $table->integer('total_floors');
+        $table->integer('max_capacity');
+        $table->time('student_hours_start');
+        $table->time('student_hours_end');
+        $table->time('activity_hours_start')->nullable();
+        $table->time('activity_hours_end')->nullable();
+        $table->time('cleaning_hours_start')->nullable();
+        $table->time('cleaning_hours_end')->nullable();
+        $table->timestamps();
+    });
+}
+
+public function down()
+{
+    Schema::dropIfExists('school_info');
+}
+
+};
+
+---
+
+File: database/migrations/2024_10_25_153407_add_emergency_fields_and_floor_number.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+	public function up()
+{
+    Schema::table('school_infos', function (Blueprint $table) {
+        $table->enum('status', ['Emergency', 'Normal'])->default('Normal');  // New column for emergency status
+    });
+
+    Schema::table('rooms', function (Blueprint $table) {
+        $table->integer('floor_number')->nullable();  // Add floor number to rooms table
+    });
+
+    Schema::create('emergencies', function (Blueprint $table) {
+        $table->id();
+        $table->enum('emergency_type', ['Active Shooter', 'Tornado', 'Medical']);
+        $table->text('description');
+        $table->string('reporting_phone')->nullable();
+        $table->foreignId('reporting_user_id')->constrained('users')->onDelete('cascade');
+        $table->integer('room_occupancy');
+        $table->integer('school_occupancy');
+        $table->timestamps();
+    });
+}
+
+public function down()
+{
+    Schema::table('school_infos', function (Blueprint $table) {
+        $table->dropColumn('status');
+    });
+
+    Schema::table('rooms', function (Blueprint $table) {
+        $table->dropColumn('floor_number');
+    });
+
+    Schema::dropIfExists('emergencies');
+}
+
+};
+
+---
+
+File: database/migrations/2024_10_28_140709_add_fields_to_rooms_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddFieldsToRoomsTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('rooms', function (Blueprint $table) {
+            $table->integer('current_occupancy')->default(0);
+            $table->enum('status', ['sheltered in place', 'need medical help', 'evac-safe', 'empty'])->default('empty');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('rooms', function (Blueprint $table) {
+            $table->dropColumn(['current_occupancy', 'status']);
+        });
+    }
+}
+
+
+---
+
+File: database/migrations/2024_10_28_141153_create_guests_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateGuestsTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('guests', function (Blueprint $table) {
+            $table->id();
+            $table->string('guest_name');
+            $table->boolean('substitute')->default(false);
+            $table->boolean('vendor')->default(false);
+            $table->boolean('freq_visitor')->default(false);
+            $table->string('mobile')->nullable();
+            $table->string('working_room')->nullable();
+            $table->string('guest_of')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('guests');
+    }
+}
+
+
+---
+
+File: database/migrations/2024_10_29_134320_add_mobile_to_users_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddMobileToUsersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('mobile')->nullable()->after('email'); // Add 'mobile' column
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('mobile'); // Drop 'mobile' column
+        });
+    }
+}
+
+
+---
+
+File: database/migrations/2024_10_30_025106_update_school_occupancy_default_in_emergencies.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class UpdateSchoolOccupancyDefaultInEmergencies extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up()
+    {
+        Schema::table('emergencies', function (Blueprint $table) {
+            $table->integer('school_occupancy')->default(0)->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down()
+    {
+        Schema::table('emergencies', function (Blueprint $table) {
+            $table->integer('school_occupancy')->change();
+        });
+    }
+}
+
+
+---
+
+File: database/migrations/2024_11_21_151651_add_status_values_to_school_infos_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddStatusValuesToSchoolInfosTable extends Migration
+{
+    public function up()
+    {
+        Schema::table('school_infos', function (Blueprint $table) {
+            $table->string('status')->default('Normal')->change();
+        });
+    }
+
+    public function down()
+    {
+        Schema::table('school_infos', function (Blueprint $table) {
+            $table->string('status')->default(null)->change();
+        });
+    }
+}
+
+
+---
+
