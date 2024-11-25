@@ -3,7 +3,7 @@
 @section('content')
 <div class="container">
     <h1>School Rooms Dashboard</h1>
-    
+
     <div class="row mb-4">
         <div class="col-md-6">
             <h3>Total Rooms: {{ $totalRooms }}</h3>

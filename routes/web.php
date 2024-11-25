@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Room Management Routes
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/rooms/{id}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
     Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
     Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
 

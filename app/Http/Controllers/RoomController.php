@@ -28,20 +28,53 @@ class RoomController extends Controller
         return view('rooms.show', compact('room', 'roomLeaders'));
     }
 
+    public function edit($id)
+    {
+        $room = Room::findOrFail($id);
+
+        // Enum options for room status
+        $statusOptions = [
+            'sheltered in place',
+            'need medical help',
+            'evac-safe',
+            'empty',
+            'Tornado Shelter',
+            'Evacuate Outside',
+            'All Safe',
+        ];
+
+        return view('rooms.edit', compact('room', 'statusOptions'));
+    }
+
     public function update(Request $request, $id)
     {
+        \Log::info('Update request data: ', $request->all());
+
+        // Validate the request
         $request->validate([
             'current_occupancy' => 'required|integer|min:0|max:30',
             'status' => 'required|in:sheltered in place,need medical help,evac-safe,empty,Tornado Shelter,Evacuate Outside,All Safe',
         ]);
 
-        $room = Room::findOrFail($id);
-        $room->update([
-            'current_occupancy' => $request->input('current_occupancy'),
-            'status' => $request->input('status'),
-        ]);
+        $room = Room::find($id);
 
-        return redirect()->route('rooms.index')->with('status', 'Room updated successfully.');
+        if (!$room) {
+            \Log::error('Room not found: ' . $id);
+            return redirect()->back()->withErrors('Room not found.');
+        }
+
+        // Log the room data before update
+        \Log::info('Room before update: ', $room->toArray());
+
+        // Update the room
+        $room->current_occupancy = $request->input('current_occupancy');
+        $room->status = $request->input('status');
+        $room->save();
+
+        // Log the room data after update
+        \Log::info('Room after update: ', $room->toArray());
+
+        return redirect()->route('rooms.show', $id)->with('status', 'Room details updated successfully.');
     }
 
     public function maps()
