@@ -2,7 +2,26 @@
 
 @section('content')
 <div class="container">
-    <h1>Rooms</h1>
+    <h1>School Rooms Dashboard</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h3>Total Rooms: {{ $totalRooms }}</h3>
+            <h3>Total Registered Users:</h3>
+            <ul>
+                @foreach ($registeredUsers as $role => $count)
+                    <li>{{ ucfirst($role) }}: {{ $count }}</li>
+                @endforeach
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h3>Total Occupied Rooms: {{ $totalOccupiedRooms }}</h3>
+            <h3>Total People in Building: {{ $totalPeople }}</h3>
+            <h3>Current Safety Status: {{ $schoolStatus }}</h3>
+        </div>
+    </div>
+
+    <h2>Room List</h2>
     <table class="table">
         <thead>
             <tr>

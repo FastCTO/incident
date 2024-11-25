@@ -3,6 +3,10 @@
 @section('content')
 <div class="container">
     <h1>Room: {{ $room->room_number }}</h1>
+
+    <h3>Status: {{ $room->status }}</h3>
+    <h3>Current Occupancy: {{ $room->current_occupancy }}</h3>
+
     <h3>Room Leaders</h3>
     @if ($roomLeaders->isEmpty())
         <p>No room leaders assigned yet.</p>

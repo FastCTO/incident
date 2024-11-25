@@ -27,8 +27,7 @@ Route::middleware(['auth'])->group(function () {
     // Room Management Routes
     Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
     Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
-    Route::put('/rooms/{id}', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');  // Update route
-    Route::put('/rooms/{id}/occupancy', [RoomController::class, 'updateOccupancy'])->name('rooms.updateOccupancy');
+    Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
 
     // Emergency Reporting Routes
     Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
@@ -72,12 +71,12 @@ class RoomController extends Controller
     public function index()
     {
         $rooms = Room::all(); // Fetch all rooms
-        return view('rooms.index', compact('rooms')); // Pass rooms to the view
+        return view('rooms.index', compact('rooms'));
     }
 
     public function show($id)
     {
-        $room = Room::findOrFail($id);
+        $room = Room::findOrFail($id); // Fetch the room by ID
         $roomLeaders = User::where('room_leader', true)
             ->where('home_room', $room->room_number)
             ->get();
@@ -88,7 +87,7 @@ class RoomController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'current_occupancy' => 'required|integer|min:0',
+            'current_occupancy' => 'required|integer|min:0|max:30',
             'status' => 'required|in:sheltered in place,need medical help,evac-safe,empty,Tornado Shelter,Evacuate Outside,All Safe',
         ]);
 
@@ -103,59 +102,14 @@ class RoomController extends Controller
         return redirect()->route('rooms.index')->with('status', 'Room updated successfully.');
     }
 
-    public function updateOccupancy(Request $request, $id)
+    public function maps()
     {
-        $request->validate([
-            'current_occupancy' => 'required|integer|min:0|max:30',
-        ]);
+        $rooms = Room::all(); // Fetch all rooms
+        $totalOccupancy = $rooms->sum('current_occupancy'); // Calculate total occupancy
 
-        $room = Room::findOrFail($id);
-        $room->current_occupancy = $request->input('current_occupancy');
-        $room->save();
-
-        return redirect()->route('rooms.show', $room->id)->with('success', 'Occupancy updated successfully.');
+        return view('maps.index', compact('rooms', 'totalOccupancy'));
     }
 }
-public function show($id)
-{
-    // Fetch the room by its ID
-    $room = Room::findOrFail($id);
-
-    // Fetch users who are marked as room leaders for this room
-    $roomLeaders = User::where('room_leader', true)
-        ->where('home_room', $room->room_number)
-        ->get();
-
-    // Return the view for the room details
-    return view('rooms.show', compact('room', 'roomLeaders'));
-}
-
-public function maps()
-{
-    $rooms = Room::all(); // Fetch all rooms for the map
-    $totalOccupancy = $rooms->sum('current_occupancy'); // Calculate total occupancy
-
-    return view('maps.index', compact('rooms', 'totalOccupancy'));
-}
-
-
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <h1>Room: {{ $room->room_number }}</h1>
-    <h3>Room Leaders</h3>
-    @if ($roomLeaders->isEmpty())
-        <p>No room leaders assigned yet.</p>
-    @else
-        <ul>
-            @foreach ($roomLeaders as $leader)
-                <li>{{ $leader->name }} ({{ $leader->email }})</li>
-            @endforeach
-        </ul>
-    @endif
-</div>
-@endsection
 
 @extends('layouts.app')
 
@@ -184,6 +138,24 @@ public function maps()
             @endforeach
         </tbody>
     </table>
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>Room: {{ $room->room_number }}</h1>
+    <h3>Room Leaders</h3>
+    @if ($roomLeaders->isEmpty())
+        <p>No room leaders assigned yet.</p>
+    @else
+        <ul>
+            @foreach ($roomLeaders as $leader)
+                <li>{{ $leader->name }} ({{ $leader->email }})</li>
+            @endforeach
+        </ul>
+    @endif
 </div>
 @endsection
 

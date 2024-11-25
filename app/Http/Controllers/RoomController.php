@@ -5,22 +5,25 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
     public function index()
     {
-        $rooms = Room::all(); // Fetch all rooms
-        return view('rooms.index', compact('rooms'));
+        $rooms = Room::all();
+        $totalRooms = $rooms->count();
+        $registeredUsers = User::all()->groupBy('role')->map->count();
+        $totalOccupiedRooms = $rooms->where('current_occupancy', '>', 0)->count();
+        $totalPeople = $rooms->sum('current_occupancy');
+        $schoolStatus = config('school.safety_status', 'Safe');
+
+        return view('rooms.index', compact('rooms', 'totalRooms', 'registeredUsers', 'totalOccupiedRooms', 'totalPeople', 'schoolStatus'));
     }
 
     public function show($id)
     {
-        $room = Room::findOrFail($id); // Fetch the room by ID
-        $roomLeaders = User::where('room_leader', true)
-            ->where('home_room', $room->room_number)
-            ->get();
+        $room = Room::findOrFail($id);
+        $roomLeaders = User::where('room_leader', true)->where('home_room', $room->room_number)->get();
 
         return view('rooms.show', compact('room', 'roomLeaders'));
     }
@@ -38,15 +41,13 @@ class RoomController extends Controller
             'status' => $request->input('status'),
         ]);
 
-        Log::info('Room updated: ' . $room->id);
-
         return redirect()->route('rooms.index')->with('status', 'Room updated successfully.');
     }
 
     public function maps()
     {
-        $rooms = Room::all(); // Fetch all rooms
-        $totalOccupancy = $rooms->sum('current_occupancy'); // Calculate total occupancy
+        $rooms = Room::all();
+        $totalOccupancy = $rooms->sum('current_occupancy');
 
         return view('maps.index', compact('rooms', 'totalOccupancy'));
     }

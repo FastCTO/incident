@@ -9,18 +9,9 @@
         <li><strong>Name:</strong> {{ $school->name }}</li>
         <li><strong>Address:</strong> {{ $school->address }}</li>
         <li><strong>Total Floors:</strong> {{ $school->total_floors }}</li>
-        <li><strong>Reporting User:</strong> {{ Auth::user()->name }}</li>
-        <li><strong>User's Cell:</strong> {{ $userMobile }}</li>
         <li><strong>Current Building Occupancy:</strong> {{ $buildingOccupancy }}</li>
         <li><strong>Rooms Occupied:</strong> {{ $roomsOccupied }}</li>
-        <li><strong>Reporting Room:</strong> {{ $reportingRoom }}</li>
-    </ul>
-
-    <h2>Room Leaders</h2>
-    <ul>
-        @foreach ($roomLeaders as $leader)
-            <li>{{ $leader->name }} ({{ $leader->email }})</li>
-        @endforeach
+        <li><strong>User's Cell:</strong> {{ $userMobile }}</li>
     </ul>
 
     <!-- Emergency Report Form -->
@@ -38,14 +29,7 @@
 
         <div class="mb-3">
             <label for="reporting_phone" class="form-label">Reporting Phone</label>
-            <input type="text" class="form-control" id="reporting_phone"
-                   name="reporting_phone" value="{{ $userMobile }}" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="room_occupancy" class="form-label">Room Occupancy</label>
-            <input type="number" class="form-control" id="room_occupancy"
-                   name="room_occupancy" value="{{ $roomOccupancy }}" required>
+            <input type="text" class="form-control" id="reporting_phone" name="reporting_phone" value="{{ $userMobile }}" required>
         </div>
 
         <div class="mb-3">
