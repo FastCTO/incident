@@ -13,39 +13,36 @@ use Illuminate\Support\Facades\Log;
 
 class EmergencyController extends Controller
 {
+    public function report()
+    {
+        $school = SchoolInfo::first();
+        $rooms = Room::all();
+        $roomLeaders = User::where('room_leader', true)->get();
 
-public function report()
-{
-    $school = SchoolInfo::first();
-    $rooms = Room::all();
-    $roomLeaders = User::where('room_leader', true)->get();
+        // Calculate building occupancy
+        $buildingOccupancy = Room::sum('current_occupancy') + DB::table('guests')->count();
 
-    // Calculate building occupancy
-    $buildingOccupancy = Room::sum('current_occupancy') + DB::table('guests')->count();
+        // Get the logged-in user's home room
+        $roomId = Auth::user()->home_room;
 
-    // Get the logged-in user's home room
-    $roomId = Auth::user()->home_room;
+        // Fetch the specific room's occupancy
+        $room = Room::where('room_number', $roomId)->first();
+        $roomOccupancy = $room ? $room->current_occupancy : 0;
 
-    // Fetch the specific room's occupancy
-    $room = Room::where('room_number', $roomId)->first();
-    $roomOccupancy = $room ? $room->current_occupancy : 0;
+        // Reporting room
+        $reportingRoom = $roomId;
 
-    // Set the reporting room
-    $reportingRoom = $roomId;
+        // Calculate occupied rooms count
+        $roomsOccupied = Room::where('current_occupancy', '>', 0)->count();
 
-    // Calculate occupied rooms count
-    $roomsOccupied = Room::where('current_occupancy', '>', 0)->count();
+        $userMobile = Auth::user()->mobile;
 
-    $userMobile = Auth::user()->mobile;
-
-    // Pass all the data to the view
-    return view('emergency.report', compact(
-        'school', 'rooms', 'roomLeaders',
-        'roomOccupancy', 'buildingOccupancy',
-        'roomsOccupied', 'reportingRoom', 'userMobile'
-    ));
-}
-
+        return view('emergency.report', compact(
+            'school', 'rooms', 'roomLeaders',
+            'roomOccupancy', 'buildingOccupancy',
+            'roomsOccupied', 'reportingRoom', 'userMobile'
+        ));
+    }
 
     public function store(Request $request)
     {
@@ -61,7 +58,7 @@ public function report()
             'school_occupancy' => Room::sum('current_occupancy'),
         ]));
 
-        // Update room occupancy if it changed
+        // Update room occupancy if changed
         $roomId = Auth::user()->home_room;
         $room = Room::where('room_number', $roomId)->first();
 
@@ -81,7 +78,6 @@ public function report()
         return redirect()->route('home')->with('status', 'Emergency reported successfully!');
     }
 
-    // Reuse the working SMS logic from InviteController
     protected function sendEmergencySMS($cellNumber, $emergencyType, $description)
     {
         try {
@@ -127,6 +123,20 @@ public function report()
         } catch (\Exception $e) {
             Log::error('SMS sending failed: ' . $e->getMessage());
         }
+    }
+
+    public function sendEmergencyText(Request $request)
+    {
+        // Example of sending a text to all team members:
+        /*
+        $teamMembers = User::where('role', 'team')->get();
+        foreach ($teamMembers as $member) {
+            // Implement your SMS logic here
+            SmsService::send($member->phone, "Emergency text: Please take action.");
+        }
+        */
+
+        return redirect()->route('school.management')->with('status', 'Emergency text sent successfully.');
     }
 }
 

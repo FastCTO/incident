@@ -21,6 +21,46 @@
                 </select>
                 <button type="submit" class="btn btn-primary mt-3">Update Status</button>
             </form>
+
+            <!-- Invite Button -->
+            <div class="mt-4">
+                <a href="{{ route('invite.form') }}" class="btn btn-secondary">Invite Teachers/Staff</a>
+            </div>
+
+            <!-- Send Emergency Text to Team -->
+            <div class="mt-4">
+                <form method="POST" action="{{ route('emergency.sendtext') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-danger">Send Emergency Text to Team</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header"><h2>Room - Teacher Management</h2></div>
+        <div class="card-body">
+            @foreach ($rooms as $room)
+                <h5>{{ $room->name }}</h5>
+                @if($room->users->isEmpty())
+                    <p>No teachers assigned.</p>
+                @else
+                    <ul>
+                        @foreach ($room->users as $teacher)
+                            @if($teacher->role == 'teacher')
+                                <li>
+                                    {{ $teacher->name }} ({{ $teacher->email }})
+                                    <form method="POST" action="{{ route('rooms.teacher.remove', ['roomId' => $room->id, 'teacherId' => $teacher->id]) }}" style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
+                                </li>
+                            @endif
+                        @endforeach
+                    </ul>
+                @endif
+            @endforeach
         </div>
     </div>
 </div>

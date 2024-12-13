@@ -37,6 +37,8 @@
             <textarea class="form-control" id="description" name="description" required></textarea>
         </div>
 
+        <input type="hidden" name="room_occupancy" value="{{ $roomOccupancy }}" />
+
         <button type="submit" class="btn btn-danger btn-lg">Submit Emergency</button>
     </form>
 </div>

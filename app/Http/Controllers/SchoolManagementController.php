@@ -14,9 +14,11 @@ class SchoolManagementController extends Controller
     public function index()
     {
         $school = SchoolInfo::first(); // Assuming a single school record exists
+        $rooms = \App\Models\Room::with('users')->get(); // Adjust model namespace if needed
 
         return view('school-management.index', [
             'school' => $school,
+            'rooms' => $rooms,
         ]);
     }
 

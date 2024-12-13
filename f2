@@ -1,0 +1,655 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\EmergencyController;
+use App\Http\Controllers\InviteController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\SchoolManagementController;
+
+if (App::isDownForMaintenance()) {
+    Route::view('/', 'maintenance');
+}
+
+// Redirect users with room assignments to the dashboard
+Route::get('/', function () {
+    return redirect()->route('home');
+});
+
+// Routes that require user authentication
+Route::middleware(['auth'])->group(function () {
+    // Home/Dashboard Route
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Room Management Routes
+    Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+    Route::get('/rooms/{id}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
+    Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+    Route::put('/rooms/{id}', [RoomController::class, 'update'])->name('rooms.update');
+
+    // Emergency Reporting Routes
+    Route::get('/emergency/report', [EmergencyController::class, 'report'])->name('emergency.report');
+    Route::post('/emergency/report', [EmergencyController::class, 'store'])->name('emergency.store');
+
+    // Invite Management Routes
+    Route::get('/invite', [InviteController::class, 'showForm'])->name('invite.form');
+    Route::post('/invite', [InviteController::class, 'sendInvite'])->name('invite');
+
+    // Guest Management Route
+    Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
+
+    // Map Route
+    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+
+    // School Management Route
+    Route::get('/school-management', [SchoolManagementController::class, 'index'])->name('school.management');
+    Route::put('/school-management/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
+
+    // Logout Route
+    Route::post('/logout', function () {
+        \Illuminate\Support\Facades\Auth::logout();
+        return redirect('/'); // Redirect to the homepage after logout
+    })->name('logout');
+});
+
+// Authentication Routes
+Auth::routes();
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\SchoolInfo;
+use Illuminate\Support\Facades\Log;
+
+class SchoolManagementController extends Controller
+{
+    /**
+     * Display the School Management Dashboard.
+     */
+    public function index()
+    {
+        $school = SchoolInfo::first(); // Assuming a single school record exists
+
+        return view('school-management.index', [
+            'school' => $school,
+        ]);
+    }
+
+    // In SchoolManagementController@index()
+$school = SchoolInfo::first();
+$rooms = \App\Models\Room::with('users')->get(); // Adjust model namespace as needed
+
+return view('school-management.index', [
+    'school' => $school,
+    'rooms' => $rooms,
+]);
+
+    /**
+     * Update the school security status.
+     */
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:Normal,Emergency,Active Shooter,Lockdown',
+        ]);
+
+        $school = SchoolInfo::first(); // Assuming a single school record exists
+        if ($school) {
+            $school->status = $validated['status'];
+            $school->save();
+
+            // Log the change
+            Log::info('School status updated to: ' . $validated['status']);
+        }
+
+        return redirect()->route('school.management')->with('status', 'Security status updated successfully.');
+    }
+}
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Room;
+use App\Models\User;
+use Illuminate\Http\Request;
+
+class RoomController extends Controller
+{
+    public function index()
+    {
+        $rooms = Room::all();
+        $totalRooms = $rooms->count();
+        $registeredUsers = User::all()->groupBy('role')->map->count();
+        $totalOccupiedRooms = $rooms->where('current_occupancy', '>', 0)->count();
+        $totalPeople = $rooms->sum('current_occupancy');
+        $schoolStatus = config('school.safety_status', 'Safe');
+
+        return view('rooms.index', compact('rooms', 'totalRooms', 'registeredUsers', 'totalOccupiedRooms', 'totalPeople', 'schoolStatus'));
+    }
+
+    public function show($id)
+    {
+        $room = Room::findOrFail($id);
+        $roomLeaders = User::where('room_leader', true)->where('home_room', $room->room_number)->get();
+
+        return view('rooms.show', compact('room', 'roomLeaders'));
+    }
+
+    public function edit($id)
+    {
+        $room = Room::findOrFail($id);
+
+        // Enum options for room status
+        $statusOptions = [
+            'sheltered in place',
+            'need medical help',
+            'evac-safe',
+            'empty',
+            'Tornado Shelter',
+            'Evacuate Outside',
+            'All Safe',
+        ];
+
+        return view('rooms.edit', compact('room', 'statusOptions'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        \Log::info('Update request data: ', $request->all());
+
+        // Validate the request
+        $request->validate([
+            'current_occupancy' => 'required|integer|min:0|max:30',
+            'status' => 'required|in:sheltered in place,need medical help,evac-safe,empty,Tornado Shelter,Evacuate Outside,All Safe',
+        ]);
+
+        $room = Room::find($id);
+
+        if (!$room) {
+            \Log::error('Room not found: ' . $id);
+            return redirect()->back()->withErrors('Room not found.');
+        }
+
+        // Log the room data before update
+        \Log::info('Room before update: ', $room->toArray());
+
+        // Update the room
+        $room->current_occupancy = $request->input('current_occupancy');
+        $room->status = $request->input('status');
+        $room->save();
+
+        // Log the room data after update
+        \Log::info('Room after update: ', $room->toArray());
+
+        return redirect()->route('rooms.show', $id)->with('status', 'Room details updated successfully.');
+    }
+
+    public function maps()
+    {
+        $rooms = Room::all();
+        $totalOccupancy = $rooms->sum('current_occupancy');
+
+        return view('maps.index', compact('rooms', 'totalOccupancy'));
+    }
+    public function removeTeacher($roomId, $teacherId)
+{
+    // Assuming you have a many-to-many relationship between Room and User
+    $room = Room::findOrFail($roomId);
+    // Detach the teacher from the room; assumes users() relationship on Room model
+    $room->users()->detach($teacherId);
+
+    return redirect()->route('school.management')->with('status', 'Teacher removed from room successfully.');
+}
+
+}
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Room;
+use App\Models\User;
+use App\Models\Emergency;
+use App\Models\SchoolInfo;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class EmergencyController extends Controller
+{
+
+public function report()
+{
+    $school = SchoolInfo::first();
+    $rooms = Room::all();
+    $roomLeaders = User::where('room_leader', true)->get();
+
+    // Calculate building occupancy
+    $buildingOccupancy = Room::sum('current_occupancy') + DB::table('guests')->count();
+
+    // Get the logged-in user's home room
+    $roomId = Auth::user()->home_room;
+
+    // Fetch the specific room's occupancy
+    $room = Room::where('room_number', $roomId)->first();
+    $roomOccupancy = $room ? $room->current_occupancy : 0;
+
+    // Set the reporting room
+    $reportingRoom = $roomId;
+
+    // Calculate occupied rooms count
+    $roomsOccupied = Room::where('current_occupancy', '>', 0)->count();
+
+    $userMobile = Auth::user()->mobile;
+
+    // Pass all the data to the view
+    return view('emergency.report', compact(
+        'school', 'rooms', 'roomLeaders',
+        'roomOccupancy', 'buildingOccupancy',
+        'roomsOccupied', 'reportingRoom', 'userMobile'
+    ));
+}
+
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'emergency_type' => 'required',
+            'description' => 'required|string|max:255',
+            'reporting_phone' => 'required|string',
+            'room_occupancy' => 'required|integer',
+        ]);
+
+        Emergency::create(array_merge($validated, [
+            'reporting_user_id' => Auth::id(),
+            'school_occupancy' => Room::sum('current_occupancy'),
+        ]));
+
+        // Update room occupancy if it changed
+        $roomId = Auth::user()->home_room;
+        $room = Room::where('room_number', $roomId)->first();
+
+        if ($room) {
+            $room->current_occupancy = $validated['room_occupancy'];
+            $room->updated_at = now();
+            $room->save();
+        }
+
+        // Send SMS alert
+        $this->sendEmergencySMS(
+            $validated['reporting_phone'],
+            $validated['emergency_type'],
+            $validated['description']
+        );
+
+        return redirect()->route('home')->with('status', 'Emergency reported successfully!');
+    }
+
+    // Reuse the working SMS logic from InviteController
+    protected function sendEmergencySMS($cellNumber, $emergencyType, $description)
+    {
+        try {
+            if (!str_starts_with($cellNumber, '1')) {
+                $cellNumber = '1' . $cellNumber;
+            }
+
+            $message = "Emergency Alert: $emergencyType. Description: $description.";
+            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0'; // Replace with valid API key
+            $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';
+
+            $payload = [
+                'from' => '19312230233',  // Sender number
+                'to' => [$cellNumber],
+                'body' => $message,
+            ];
+
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $bearerToken,
+                'Content-Type: application/json',
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            Log::info("SMS API Response: HTTP $httpCode - $response");
+
+            if (curl_errno($ch)) {
+                Log::error('cURL error: ' . curl_error($ch));
+                throw new \Exception('cURL error: ' . curl_error($ch));
+            }
+
+            if ($httpCode >= 400) {
+                Log::error('Failed to send SMS: ' . $response);
+                throw new \Exception('Failed to send SMS: ' . $response);
+            }
+
+            curl_close($ch);
+        } catch (\Exception $e) {
+            Log::error('SMS sending failed: ' . $e->getMessage());
+        }
+    }
+    public function sendEmergencyText(Request $request)
+{
+    // Implement logic to send a text message to all team members.
+    // This might involve fetching phone numbers from the database
+    // and using an SMS gateway API (e.g., Twilio) to send a message.
+
+    // Example (pseudocode):
+    /*
+    $teamMembers = User::where('role', 'team')->get(); // or however you define "team"
+    foreach ($teamMembers as $member) {
+        // Use your SMS service
+        SmsService::send($member->phone, "Emergency text: Please take action.");
+    }
+    */
+
+    return redirect()->route('school.management')->with('status', 'Emergency text sent successfully.');
+}
+}
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Invite;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
+class InviteController extends Controller
+{
+	   public function showForm()
+    {
+        return view('invite'); // Ensure this view exists in resources/views/invite.blade.php
+    }
+	public function sendInvite(Request $request)
+{
+    Log::info('sendInvite() called');  // Confirm function is called
+
+    try {
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'cell_number' => 'required|string',  // Removed 'unique'
+            'email' => 'nullable|email',  // Removed 'unique'
+        ]);
+
+        Log::info('Validation passed', $request->all());
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation failed: ' . json_encode($e->errors()));
+        return back()->withErrors($e->errors());
+    }
+
+    $token = bin2hex(random_bytes(16));  // Generate a token
+
+    Invite::create([
+        'first_name' => $request->first_name,
+        'last_name' => $request->last_name,
+        'email' => $request->email,
+        'cell_number' => $request->cell_number,
+        'invited_by' => Auth::id(),
+        'token' => $token,
+        'expires_at' => now()->addDays(7),
+    ]);
+
+    Log::info('Invite created with token: ' . $token);
+
+    $this->sendInviteSMS($request->cell_number, $token);
+
+    Log::info('SMS sent to: ' . $request->cell_number);
+
+    return back()->with('success', 'Invite sent successfully!');
+}
+
+    // Function to send SMS (Now inside the class)
+    protected function sendInviteSMS($cellNumber, $token)
+    {
+        try {
+            if (!str_starts_with($cellNumber, '1')) {
+                $cellNumber = '1' . $cellNumber;
+            }
+
+            $message = "You're invited! Use this link to create your account: " .
+                       url('/register?token=' . $token);
+
+            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0';  // Replace with your actual API key
+            $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';  // Replace with endpoint
+
+            $payload = [
+                'from' => '19312230233',  // Replace with your sender number
+                'to' => [$cellNumber],
+                'body' => $message,
+            ];
+
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $bearerToken,
+                'Content-Type: application/json',
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            Log::info("SMS API Response: HTTP $httpCode - $response");
+
+            if (curl_errno($ch)) {
+                Log::error('cURL error: ' . curl_error($ch));
+                throw new \Exception('cURL error: ' . curl_error($ch));
+            }
+
+            if ($httpCode >= 400) {
+                Log::error('Failed to send SMS: ' . $response);
+                throw new \Exception('Failed to send SMS: ' . $response);
+            }
+
+            curl_close($ch);
+        } catch (\Exception $e) {
+            Log::error('SMS sending failed: ' . $e->getMessage());
+        }
+    }
+}
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>School Management Dashboard</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>{{ $school->name }}</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Security Status:</strong></p>
+            <form method="POST" action="{{ route('school.management.update') }}">
+                @csrf
+                @method('PUT')
+                <select name="status" class="form-select">
+                    <option value="Normal" {{ $school->status == 'Normal' ? 'selected' : '' }}>Normal</option>
+                    <option value="Emergency" {{ $school->status == 'Emergency' ? 'selected' : '' }}>Emergency</option>
+                    <option value="Active Shooter" {{ $school->status == 'Active Shooter' ? 'selected' : '' }}>Active Shooter</option>
+                    <option value="Lockdown" {{ $school->status == 'Lockdown' ? 'selected' : '' }}>Lockdown</option>
+                </select>
+                <button type="submit" class="btn btn-primary mt-3">Update Status</button>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="card mt-4">
+    <div class="card-header"><h2>Room - Teacher Management</h2></div>
+    <div class="card-body">
+        @foreach ($rooms as $room)
+            <h5>{{ $room->name }}</h5>
+            @if($room->users->isEmpty())
+                <p>No teachers assigned.</p>
+            @else
+                <ul>
+                    @foreach ($room->users as $teacher)
+                        @if($teacher->role == 'teacher')
+                            <li>
+                                {{ $teacher->name }} ({{ $teacher->email }})
+                                <form method="POST" action="{{ route('rooms.teacher.remove', ['roomId' => $room->id, 'teacherId' => $teacher->id]) }}" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </li>
+                        @endif
+                    @endforeach
+                </ul>
+            @endif
+        @endforeach
+    </div>
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>School Rooms Dashboard</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h3>Total Rooms: {{ $totalRooms }}</h3>
+            <h3>Total Registered Users:</h3>
+            <ul>
+                @foreach ($registeredUsers as $role => $count)
+                    <li>{{ ucfirst($role) }}: {{ $count }}</li>
+                @endforeach
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h3>Total Occupied Rooms: {{ $totalOccupiedRooms }}</h3>
+            <h3>Total People in Building: {{ $totalPeople }}</h3>
+            <h3>Current Safety Status: {{ $schoolStatus }}</h3>
+        </div>
+    </div>
+
+    <h2>Room List</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Status</th>
+                <th>Occupancy</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($rooms as $room)
+                <tr>
+                    <td>{{ $room->room_number }}</td>
+                    <td>{{ $room->status }}</td>
+                    <td>{{ $room->current_occupancy }}</td>
+                    <td>
+                        <a href="{{ route('rooms.show', $room->id) }}" class="btn btn-primary">View</a>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>Report Emergency</h1>
+
+    <h2>School Details</h2>
+    <ul>
+        <li><strong>Name:</strong> {{ $school->name }}</li>
+        <li><strong>Address:</strong> {{ $school->address }}</li>
+        <li><strong>Total Floors:</strong> {{ $school->total_floors }}</li>
+        <li><strong>Current Building Occupancy:</strong> {{ $buildingOccupancy }}</li>
+        <li><strong>Rooms Occupied:</strong> {{ $roomsOccupied }}</li>
+        <li><strong>User's Cell:</strong> {{ $userMobile }}</li>
+    </ul>
+
+    <!-- Emergency Report Form -->
+    <form action="{{ route('emergency.store') }}" method="POST">
+        @csrf
+
+        <div class="mb-3">
+            <label for="emergency_type" class="form-label">Emergency Type</label>
+            <select id="emergency_type" name="emergency_type" class="form-control" required>
+                <option value="Active Shooter">Active Shooter</option>
+                <option value="Tornado">Tornado</option>
+                <option value="Medical">Medical</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="reporting_phone" class="form-label">Reporting Phone</label>
+            <input type="text" class="form-control" id="reporting_phone" name="reporting_phone" value="{{ $userMobile }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Notes</label>
+            <textarea class="form-control" id="description" name="description" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-danger btn-lg">Submit Emergency</button>
+    </form>
+</div>
+@endsection
+
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Invite Someone</div>
+
+                <div class="card-body">
+                    <form action="{{ route('invite') }}" method="POST">
+                        @csrf
+
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cell_number" class="form-label">Cell Number</label>
+                            <input type="text" class="form-control" id="cell_number" name="cell_number" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email (Optional)</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Send Invite</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+

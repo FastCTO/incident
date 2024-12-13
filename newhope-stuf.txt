@@ -1,0 +1,16 @@
+<script>
+    // Initialize the map and set its view to the new location (New Hope Academy)
+    var map = L.map('map').setView([35.917786, -86.899142], 17); // Zoom level set to 17
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add a marker at the given location
+    var marker = L.marker([35.917786, -86.899142]).addTo(map)
+        .bindPopup('New Hope Academy')
+        .openPopup();
+</script>
+
