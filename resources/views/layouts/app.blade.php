@@ -96,6 +96,46 @@
     </div>
 
     <script src="{{ asset('js/app.js') }}"></script>
+<div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; width: 300px;">
+    <div id="chat-header" style="background: #007bff; color: #fff; padding: 10px; cursor: pointer; border-radius: 10px 10px 0 0;">
+        Chat with Us
+    </div>
+    <div id="chat-body" style="display: none; border: 1px solid #007bff; background: #fff; padding: 10px; max-height: 400px; overflow-y: auto; border-radius: 0 0 10px 10px;">
+        <div id="chat-box" style="height: 300px; overflow-y: auto; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></div>
+        <input type="text" id="chat-input" class="form-control" placeholder="Type a message...">
+        <button class="btn btn-primary mt-2 w-100" onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('chat-header').addEventListener('click', () => {
+        const chatBody = document.getElementById('chat-body');
+        chatBody.style.display = chatBody.style.display === 'none' ? 'block' : 'none';
+    });
+
+    async function sendMessage() {
+        const message = document.getElementById('chat-input').value;
+        if (!message) return;
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML += `<div class="text-end"><strong>You:</strong> ${message}</div>`;
+
+        const response = await fetch('{{ route('chat.send') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+            body: JSON.stringify({ message }),
+        });
+
+        const data = await response.json();
+        chatBox.innerHTML += `<div class="text-start"><strong>Bot:</strong> ${data.response}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        document.getElementById('chat-input').value = '';
+    }
+</script>
+
 </body>
 </html>
 

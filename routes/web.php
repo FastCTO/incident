@@ -8,6 +8,8 @@ use App\Http\Controllers\EmergencyController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\SchoolManagementController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\EmergencyChatController;
 
 if (App::isDownForMaintenance()) {
     Route::view('/', 'maintenance');
@@ -55,6 +57,20 @@ Route::middleware(['auth'])->group(function () {
     // Teacher removal
     Route::delete('/rooms/{roomId}/teacher/{teacherId}', [RoomController::class, 'removeTeacher'])
         ->name('rooms.teacher.remove');
+
+    // Chatbot Routes
+    Route::get('/chat', function () {
+        return view('chat');
+    })->name('chat');
+    Route::post('/chat', [ChatController::class, 'sendMessage'])->name('chat.send');
+
+    // Emergency Chat Routes
+    Route::get('/emergency-chat', function () {
+        return view('emergency_chat');
+    })->name('emergency.chat');
+
+    Route::get('/emergency-chat/messages', [EmergencyChatController::class, 'fetchMessages'])->name('emergency.chat.fetch');
+    Route::post('/emergency-chat/messages', [EmergencyChatController::class, 'sendMessage'])->name('emergency.chat.send');
 
     // Logout
     Route::post('/logout', function () {

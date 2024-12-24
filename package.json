@@ -14,5 +14,9 @@
         "sass": "^1.56.1",
         "vite": "^5.0.0",
         "vue": "^3.2.37"
+    },
+    "dependencies": {
+        "express": "^4.21.2",
+        "node-fetch": "^3.3.2"
     }
 }
