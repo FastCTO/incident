@@ -7,12 +7,17 @@ use App\Events\EmergencyChatMessage;
 
 class EmergencyChatController extends Controller
 {
-    public function fetchMessages()
+    /**
+     * Show the emergency chat view.
+     */
+    public function index()
     {
-        // Fetch messages from the database if needed
-        return response()->json([]); // Optional: Implement message history logic
+        return view('emergency_chat');
     }
 
+    /**
+     * Handle sending a new emergency chat message.
+     */
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -20,11 +25,12 @@ class EmergencyChatController extends Controller
         ]);
 
         $message = $request->message;
-        $user = auth()->user();
+        $user = auth()->user(); // Might be null if user not logged in, but we use 'auth' middleware so it should be valid
 
+        // Broadcast the event (public channel)
         broadcast(new EmergencyChatMessage($message, $user))->toOthers();
 
-        return response()->json(['status' => 'Message Sent!']);
+        return response()->json(['status' => 'Message Sent!'], 200);
     }
 }
 

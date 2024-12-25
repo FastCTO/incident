@@ -3,21 +3,22 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Queue\SerializesModels;
+use App\Models\User;
 
 class EmergencyChatMessage implements ShouldBroadcast
 {
     use InteractsWithSockets, SerializesModels;
 
     public $message;
-    public $user;
+    public $username;
 
-    public function __construct($message, $user)
+    public function __construct($message, ?User $user)
     {
         $this->message = $message;
-        $this->user = $user;
+        $this->username = $user ? $user->name : 'Guest';
     }
 
     public function broadcastOn()

@@ -17,6 +17,8 @@
     },
     "dependencies": {
         "express": "^4.21.2",
-        "node-fetch": "^3.3.2"
+        "laravel-echo": "^1.17.1",
+        "node-fetch": "^3.3.2",
+        "pusher-js": "^8.4.0-rc2"
     }
 }

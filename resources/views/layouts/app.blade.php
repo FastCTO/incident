@@ -8,7 +8,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Guardian Cloud</title>
-
     <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
 
     <!-- Fonts -->
@@ -18,7 +17,7 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
 
-    <!-- Scripts -->
+    <!-- Main Vite assets (Bootstrap, app.js, etc.) -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
@@ -39,7 +38,7 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarContent">
-                    <!-- Navigation Links -->
+                    <!-- Left Side (Nav Links) -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('emergency.report') }}">Report Emergency</a>
@@ -51,11 +50,11 @@
                             <a class="nav-link" href="{{ route('invite.form') }}">Send Invite</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/maps') }}">Maps</a> <!-- Fixed "Maps" link -->
+                            <a class="nav-link" href="{{ url('/maps') }}">Maps</a>
                         </li>
-			<li class="nav-item">
-        		<a class="nav-link" href="{{ route('school.management') }}">School Management</a>
-    			</li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('school.management') }}">School Management</a>
+                        </li>
                     </ul>
 
                     <!-- Right Side of Navbar -->
@@ -89,52 +88,17 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
+        <!-- Main Page Content -->
         <main class="py-4">
             @yield('content')
         </main>
     </div>
 
+    <!-- Optionally load compiled JS at bottom (like app.js) -->
     <script src="{{ asset('js/app.js') }}"></script>
-<div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; width: 300px;">
-    <div id="chat-header" style="background: #007bff; color: #fff; padding: 10px; cursor: pointer; border-radius: 10px 10px 0 0;">
-        Chat with Us
-    </div>
-    <div id="chat-body" style="display: none; border: 1px solid #007bff; background: #fff; padding: 10px; max-height: 400px; overflow-y: auto; border-radius: 0 0 10px 10px;">
-        <div id="chat-box" style="height: 300px; overflow-y: auto; border-bottom: 1px solid #ccc; margin-bottom: 10px;"></div>
-        <input type="text" id="chat-input" class="form-control" placeholder="Type a message...">
-        <button class="btn btn-primary mt-2 w-100" onclick="sendMessage()">Send</button>
-    </div>
-</div>
 
-<script>
-    document.getElementById('chat-header').addEventListener('click', () => {
-        const chatBody = document.getElementById('chat-body');
-        chatBody.style.display = chatBody.style.display === 'none' ? 'block' : 'none';
-    });
-
-    async function sendMessage() {
-        const message = document.getElementById('chat-input').value;
-        if (!message) return;
-
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML += `<div class="text-end"><strong>You:</strong> ${message}</div>`;
-
-        const response = await fetch('{{ route('chat.send') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-            body: JSON.stringify({ message }),
-        });
-
-        const data = await response.json();
-        chatBox.innerHTML += `<div class="text-start"><strong>Bot:</strong> ${data.response}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-        document.getElementById('chat-input').value = '';
-    }
-</script>
+    <!-- Extra scripts from child views get pushed here -->
+    @stack('scripts')
 
 </body>
 </html>

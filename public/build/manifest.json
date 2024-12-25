@@ -5,6 +5,12 @@
     "src": "resources/js/app.js",
     "isEntry": true
   },
+  "resources/js/emergency_chat.js": {
+    "file": "assets/emergency_chat-lPkMJW6p.js",
+    "name": "emergency_chat",
+    "src": "resources/js/emergency_chat.js",
+    "isEntry": true
+  },
   "resources/sass/app.scss": {
     "file": "assets/app-DqME6eCz.css",
     "src": "resources/sass/app.scss",

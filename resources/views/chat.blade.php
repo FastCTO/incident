@@ -2,11 +2,11 @@
 
 @section('content')
 <div class="container">
+    <h1>Chatbot Page</h1>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">Chatbot</div>
-
                 <div class="card-body">
                     <div id="chat-box" style="border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto;"></div>
                     <div class="mt-3">
@@ -19,6 +19,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
     async function sendMessage() {
         const message = document.getElementById('message').value;
@@ -42,5 +43,6 @@
         document.getElementById('message').value = '';
     }
 </script>
+@endpush
 @endsection
 
