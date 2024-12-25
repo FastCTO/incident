@@ -3,34 +3,43 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Events\EmergencyChatMessage;
+use App\Models\ChatMessage;
 
 class EmergencyChatController extends Controller
 {
-    /**
-     * Show the emergency chat view.
-     */
+    // Display the emergency chat view
     public function index()
     {
         return view('emergency_chat');
     }
 
-    /**
-     * Handle sending a new emergency chat message.
-     */
+    // Handle sending a message
     public function sendMessage(Request $request)
     {
-        $request->validate([
-            'message' => 'required|string|max:255',
-        ]);
+        $message = new ChatMessage();
+        $message->user_id = auth()->id(); // Log the sender's ID
+        $message->message = $request->input('message');
+        $message->save();
 
-        $message = $request->message;
-        $user = auth()->user(); // Might be null if user not logged in, but we use 'auth' middleware so it should be valid
+        return response()->json(['status' => 'Message sent!']);
+    }
 
-        // Broadcast the event (public channel)
-        broadcast(new EmergencyChatMessage($message, $user))->toOthers();
+    // Fetch recent messages
+    public function fetchMessages()
+    {
+        $messages = ChatMessage::with('user')
+            ->latest()
+            ->limit(50) // Fetch the last 50 messages
+            ->get();
 
-        return response()->json(['status' => 'Message Sent!'], 200);
+        return response()->json(
+            $messages->map(function ($msg) {
+                return [
+                    'user' => $msg->user->name,
+                    'message' => $msg->message,
+                ];
+            })
+        );
     }
 }
 

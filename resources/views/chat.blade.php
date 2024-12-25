@@ -2,27 +2,21 @@
 
 @section('content')
 <div class="container">
-    <h1>Chatbot Page</h1>
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Chatbot</div>
-                <div class="card-body">
-                    <div id="chat-box" style="border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto;"></div>
-                    <div class="mt-3">
-                        <input type="text" id="message" class="form-control" placeholder="Type a message...">
-                        <button class="btn btn-primary mt-2" onclick="sendMessage()">Send</button>
-                    </div>
-                </div>
-            </div>
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            Chat with the Bot
+        </div>
+        <div class="card-body">
+            <div id="chat-box" style="height: 400px; overflow-y: auto; border: 1px solid #ccc; margin-bottom: 10px;"></div>
+            <input type="text" id="chat-input" class="form-control" placeholder="Type a message...">
+            <button class="btn btn-primary mt-2 w-100" onclick="sendMessage()">Send</button>
         </div>
     </div>
 </div>
 
-@push('scripts')
 <script>
     async function sendMessage() {
-        const message = document.getElementById('message').value;
+        const message = document.getElementById('chat-input').value;
         if (!message) return;
 
         const chatBox = document.getElementById('chat-box');
@@ -40,9 +34,8 @@
         const data = await response.json();
         chatBox.innerHTML += `<div class="text-start"><strong>Bot:</strong> ${data.response}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
-        document.getElementById('message').value = '';
+        document.getElementById('chat-input').value = '';
     }
 </script>
-@endpush
 @endsection
 

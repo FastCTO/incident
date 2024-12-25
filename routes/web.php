@@ -64,10 +64,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat', [ChatController::class, 'sendMessage'])->name('chat.send');
 
     // Emergency Chat (Real-time)
+	Route::middleware(['auth'])->group(function () {
     Route::get('/emergency-chat', [EmergencyChatController::class, 'index'])->name('emergency.chat');
-    Route::post('/emergency-chat/messages', [EmergencyChatController::class, 'sendMessage'])
-        ->name('emergency.chat.send');
-
+    Route::post('/emergency-chat/send', [EmergencyChatController::class, 'sendMessage'])->name('emergency.chat.send');
+    Route::get('/emergency-chat/fetch', [EmergencyChatController::class, 'fetchMessages'])->name('emergency.chat.fetch');
+    });
     // Logout
     Route::post('/logout', function () {
         \Illuminate\Support\Facades\Auth::logout();

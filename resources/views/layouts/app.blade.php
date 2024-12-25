@@ -8,16 +8,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Guardian Cloud</title>
+
+    <!-- Favicon -->
     <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
-    <!-- Custom CSS -->
+    <!-- Styles -->
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <!-- Main Vite assets (Bootstrap, app.js, etc.) -->
+    <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body>
@@ -38,8 +41,14 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarContent">
-                    <!-- Left Side (Nav Links) -->
+                    <!-- Navigation Links -->
                     <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('chat') }}">ChatGPT Bot</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('emergency.chat') }}">Emergency Chat</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('emergency.report') }}">Report Emergency</a>
                         </li>
@@ -88,18 +97,11 @@
             </div>
         </nav>
 
-        <!-- Main Page Content -->
+        <!-- Main Content -->
         <main class="py-4">
             @yield('content')
         </main>
     </div>
-
-    <!-- Optionally load compiled JS at bottom (like app.js) -->
-    <script src="{{ asset('js/app.js') }}"></script>
-
-    <!-- Extra scripts from child views get pushed here -->
-    @stack('scripts')
-
 </body>
 </html>
 
