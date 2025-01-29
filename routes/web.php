@@ -61,6 +61,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('school-management')->group(function () {
         Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
         Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
+	Route::post('/school-management/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])
+    ->name('school.management.clearChat');
+
     });
 
     // Maps

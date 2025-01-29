@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SchoolInfo;
+use App\Models\ChatMessage; // Import ChatMessage model
 use Illuminate\Support\Facades\Log;
 
 class SchoolManagementController extends Controller
@@ -31,16 +32,25 @@ class SchoolManagementController extends Controller
             'status' => 'required|in:Normal,Emergency,Active Shooter,Lockdown',
         ]);
 
-        $school = SchoolInfo::first(); // Assuming a single school record exists
+        $school = SchoolInfo::first();
         if ($school) {
             $school->status = $validated['status'];
             $school->save();
-
-            // Log the change
             Log::info('School status updated to: ' . $validated['status']);
         }
 
         return redirect()->route('school.management')->with('status', 'Security status updated successfully.');
+    }
+
+    /**
+     * Clear all messages from Emergency Chat.
+     */
+    public function clearEmergencyChat()
+    {
+        ChatMessage::truncate(); // Delete all chat messages
+        Log::info('Emergency chat has been cleared.');
+        
+        return redirect()->route('school.management')->with('status', 'Emergency chat cleared successfully.');
     }
 }
 

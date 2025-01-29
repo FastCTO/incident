@@ -63,6 +63,17 @@
             @endforeach
         </div>
     </div>
+
+    <!-- Server Management Section -->
+    <div class="card mt-4">
+        <div class="card-header bg-dark text-white"><h2>Server Management</h2></div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('school.management.clearChat') }}">
+                @csrf
+                <button type="submit" class="btn btn-danger">Clear Emergency Chat</button>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection
 
