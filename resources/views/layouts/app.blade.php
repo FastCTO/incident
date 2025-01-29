@@ -64,6 +64,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('school.management') }}">School Management</a>
                         </li>
+			<li class="nav-item">
+    				<a class="nav-link" href="{{ route('critical-care') }}">Critical Care</a>
+			</li>
+
                     </ul>
 
                     <!-- Right Side of Navbar -->
