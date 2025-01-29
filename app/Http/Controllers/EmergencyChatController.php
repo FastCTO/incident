@@ -21,15 +21,18 @@ class EmergencyChatController extends Controller
         $message->message = $request->input('message');
         $message->save();
 
-        return response()->json(['status' => 'Message sent!']);
+        return response()->json([
+            'status' => 'Message sent!',
+            'user' => auth()->user()->name,
+            'message' => $message->message
+        ]);
     }
 
     // Fetch recent messages
     public function fetchMessages()
     {
         $messages = ChatMessage::with('user')
-            ->latest()
-            ->limit(50) // Fetch the last 50 messages
+            ->orderBy('created_at', 'asc') // Keep messages in proper chronological order
             ->get();
 
         return response()->json(
