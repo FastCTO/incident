@@ -51,7 +51,7 @@
                 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" 
                      xmlns:xlink="http://www.w3.org/1999/xlink" 
                      viewBox="0 0 1200 1200" style="width: 100%; height: 600px;">
-                    <image width="1200" height="1200" xlink:href="{{ asset('images/map.png') }}"></image> 
+                    <image width="2282" height="1182" xlink:href="{{ asset('images/map.png') }}"></image> 
                     <a xlink:href="/rooms/1">
                         <rect x="136" y="204" fill="#fff" opacity="0" width="100" height="100"></rect>
                     </a>
