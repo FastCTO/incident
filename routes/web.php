@@ -11,11 +11,7 @@ use App\Http\Controllers\SchoolManagementController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmergencyChatController;
 use App\Http\Controllers\CriticalCareController;
-
-// If app is in maintenance mode, show maintenance
-if (app()->isDownForMaintenance()) {
-    Route::view('/', 'maintenance');
-}
+use App\Http\Controllers\WaveCameraController;
 
 // Redirect root to home
 Route::get('/', function () {
@@ -54,16 +50,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [InviteController::class, 'showForm'])->name('invite.form');
         Route::post('/', [InviteController::class, 'sendInvite'])->name('invite');
     });
-    
+
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
 
     // School Management
     Route::prefix('school-management')->group(function () {
         Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
         Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
-	Route::post('/school-management/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])
-    ->name('school.management.clearChat');
-
+        Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])
+            ->name('school.management.clearChat');
     });
 
     // Maps
@@ -87,11 +82,13 @@ Route::middleware(['auth'])->group(function () {
     // Critical Care Section
     Route::get('/critical-care', [CriticalCareController::class, 'index'])->name('critical-care');
 
+    // Wave Camera Streaming (HLS)
+    Route::get('/wave/camera', [WaveCameraController::class, 'viewSingleCameraHLS'])->name('wave.camera.hls');
+
     // Logout
     Route::post('/logout', function () {
         \Illuminate\Support\Facades\Auth::logout();
         return redirect('/');
     })->name('logout');
-
 });
 

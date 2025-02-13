@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Stream</title>
+</head>
+<body>
+    <h1>Live Camera Stream</h1>
+
+    <iframe src="{{ $streamUrl }}" width="640" height="480" allowfullscreen></iframe>
+</body>
+</html>
+
