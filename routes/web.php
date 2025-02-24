@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoomController;
@@ -8,44 +9,50 @@ use App\Http\Controllers\EmergencyController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\SchoolManagementController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ChatController; // Make sure this is imported
 use App\Http\Controllers\EmergencyChatController;
 use App\Http\Controllers\CriticalCareController;
+use App\Http\Controllers\WaveAuthController;
 use App\Http\Controllers\WaveCameraController;
+use App\Http\Controllers\LiveStreamController;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Http\Request;
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
 
-// Redirect root to home
 Route::get('/', function () {
     return redirect()->route('home');
 });
 
-// Authentication routes
 Auth::routes();
 
-// Auth-protected routes
 Route::middleware(['auth'])->group(function () {
-
-    // Home / Dashboard
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Rooms
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');
         Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
         Route::put('/{id}', [RoomController::class, 'update'])->name('rooms.update');
-        Route::delete('/{roomId}/teacher/{teacherId}', [RoomController::class, 'removeTeacher'])
-            ->name('rooms.teacher.remove');
+        Route::delete('/{roomId}/teacher/{teacherId}', [RoomController::class, 'removeTeacher'])->name('rooms.teacher.remove');
     });
 
-    // Emergency
     Route::prefix('emergency')->group(function () {
         Route::get('/report', [EmergencyController::class, 'report'])->name('emergency.report');
         Route::post('/report', [EmergencyController::class, 'store'])->name('emergency.store');
         Route::post('/send-text', [EmergencyController::class, 'sendEmergencyText'])->name('emergency.sendtext');
     });
 
-    // Invite / Guests
     Route::prefix('invite')->group(function () {
         Route::get('/', [InviteController::class, 'showForm'])->name('invite.form');
         Route::post('/', [InviteController::class, 'sendInvite'])->name('invite');
@@ -53,42 +60,60 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
 
-    // School Management
     Route::prefix('school-management')->group(function () {
         Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
         Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
-        Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])
-            ->name('school.management.clearChat');
+        Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])->name('school.management.clearChat');
     });
 
-    // Maps
     Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
 
-    // Chatbot (OpenAI-based)
-    Route::prefix('chat')->group(function () {
-        Route::get('/', function () {
-            return view('chat');
-        })->name('chat');
-        Route::post('/', [ChatController::class, 'sendMessage'])->name('chat.send');
-    });
+    // Define the 'chat' route
+    // 🤖 Chatbot (OpenAI-based)
+Route::prefix('chat')->group(function () {
+    Route::get('/', function () {
+        return view('chat');
+    })->name('chat');
+    Route::post('/', [ChatController::class, 'sendMessage'])->name('chat.send');
+});
 
-    // Emergency Chat (Real-time)
+
     Route::prefix('emergency-chat')->group(function () {
         Route::get('/', [EmergencyChatController::class, 'index'])->name('emergency.chat');
         Route::post('/send', [EmergencyChatController::class, 'sendMessage'])->name('emergency.chat.send');
         Route::get('/fetch', [EmergencyChatController::class, 'fetchMessages'])->name('emergency.chat.fetch');
     });
 
-    // Critical Care Section
     Route::get('/critical-care', [CriticalCareController::class, 'index'])->name('critical-care');
 
-    // Wave Camera Streaming (HLS)
-    Route::get('/wave/camera', [WaveCameraController::class, 'viewSingleCameraHLS'])->name('wave.camera.hls');
+    Route::post('/wave-auth', [WaveAuthController::class, 'authenticate'])->name('wave.auth');
 
-    // Logout
-    Route::post('/logout', function () {
-        \Illuminate\Support\Facades\Auth::logout();
-        return redirect('/');
+    Route::get('/live-stream', [LiveStreamController::class, 'getLiveStream'])->name('live.stream');
+
+    Route::get('/get-camera-stream', [WaveCameraController::class, 'getStreamUrls'])->name('camera.stream');
+
+	Route::match(['get', 'post'], '/force-refresh', function () {
+    app(WaveAuthController::class)->authenticate();
+    app(WaveCameraController::class)->getStreamUrls();
+    return redirect()->route('live.stream');
+})->name('force.refresh');
+
+    Route::post('/logout', function (Request $request) { // Inject Request
+        $user = Auth::user();
+        if ($user) {
+            Log::info("🚪 User {$user->id} logging out. Clearing cache.");
+            apcu_delete("wave_token_{$user->id}");
+            apcu_delete("wave_stream_hd_{$user->id}");
+            apcu_delete("wave_stream_sd_{$user->id}");
+        }
+
+        Session::flush();
+        Auth::logout();
+
+        // Invalidate and regenerate the session token
+        $request->session()->invalidate(); 
+        $request->session()->regenerateToken(); 
+
+        return redirect('/login')->with('status', 'Logged out successfully');
     })->name('logout');
 });
-

@@ -17,10 +17,12 @@ class EmergencyController extends Controller
     {
         $school = SchoolInfo::first();
         $rooms = Room::all();
-        $roomLeaders = User::where('room_leader', true)->get();
+	$roomLeaders = User::whereNotNull('home_room')->get();
+
 
         // Calculate building occupancy
-        $buildingOccupancy = Room::sum('current_occupancy') + DB::table('guests')->count();
+	// Calculate building occupancy without guests table
+	$buildingOccupancy = Room::sum('current_occupancy');
 
         // Get the logged-in user's home room
         $roomId = Auth::user()->home_room;

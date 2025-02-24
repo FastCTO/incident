@@ -24,7 +24,8 @@ class RoomController extends Controller
     public function show($id)
     {
         $room = Room::findOrFail($id);
-        $roomLeaders = User::where('room_leader', true)->where('home_room', $room->room_number)->get();
+	$roomLeaders = User::whereNotNull('home_room')->where('home_room', $room->room_number)->get();
+
 
         return view('rooms.show', compact('room', 'roomLeaders'));
     }
