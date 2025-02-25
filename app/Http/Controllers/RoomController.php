@@ -70,7 +70,7 @@ class RoomController extends Controller
 
         // Update the room
         $room->current_occupancy = $request->input('current_occupancy');
-        $room->status = $request->input('status');
+	$room->room_status = $request->input('status');
         $room->save();
 
         // Log the room data after update
