@@ -1,5 +1,18 @@
 <?php
 
+use Dotenv\Dotenv;
+
+/*
+|--------------------------------------------------------------------------
+| Load Environment Variables
+|--------------------------------------------------------------------------
+|
+| Manually load .env to ensure Laravel has access to it.
+|
+*/
+$dotenv = Dotenv::createImmutable(__DIR__.'/../');
+$dotenv->safeLoad(); // Use safeLoad() to prevent exceptions if .env is missing
+
 /*
 |--------------------------------------------------------------------------
 | Create The Application
@@ -53,3 +66,4 @@ $app->singleton(
 */
 
 return $app;
+
