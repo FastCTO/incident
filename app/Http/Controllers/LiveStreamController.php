@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 
 class LiveStreamController extends Controller
 {
@@ -18,14 +19,12 @@ class LiveStreamController extends Controller
         $streamUrlHD = apcu_fetch("wave_stream_hd_{$user->id}");
         $streamUrlSD = apcu_fetch("wave_stream_sd_{$user->id}");
 
-        if (!$streamUrlHD ||!$streamUrlSD) {
-            Log::warning("⚠️ HLS stream URLs not found in cache. Redirecting to force refresh...");
-            return redirect()->route('force.refresh'); 
+        if (!$streamUrlHD || !$streamUrlSD) {
+            Log::warning("⚠️ HLS stream URLs not found in cache. Redirecting to refresh...");
+            return Redirect::route('force.refresh'); 
         }
 
-        return view('wave.live-stream', [
-            'streamUrlHD' => $streamUrlHD, 
-            'streamUrlSD' => $streamUrlSD 
-        ]);
+        return view('wave.live-stream', compact('streamUrlHD', 'streamUrlSD'));
     }
 }
+

@@ -18,6 +18,7 @@ use App\Http\Controllers\LiveStreamController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
+use App\Http\Controllers\VideoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,7 +39,9 @@ Auth::routes();
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    Route::get('/video', [VideoController::class, 'index'])->name('video.page');
+    Route::get('/live-stream', [LiveStreamController::class, 'getLiveStream'])->name('live.stream');
+    Route::get('/recorded-video', [VideoController::class, 'recorded'])->name('video.recorded'); // Placeholder
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');

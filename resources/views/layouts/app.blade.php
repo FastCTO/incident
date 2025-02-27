@@ -52,6 +52,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('emergency.report') }}">Report Emergency</a>
                         </li>
+			<li class="nav-item">
+    			<a class="nav-link" href="{{ route('video.page') }}">🎥 Video</a>
+			</li>
+
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('rooms.index') }}">Rooms</a>
                         </li>

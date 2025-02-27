@@ -6,10 +6,14 @@ use Illuminate\Http\Request;
 
 class VideoController extends Controller
 {
-    // Display the video page
     public function index()
     {
-        return view('video');
+        return view('video.index'); // The main video page with buttons
+    }
+
+    public function recorded()
+    {
+        return view('video.recorded'); // Placeholder for recorded videos
     }
 }
 
