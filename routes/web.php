@@ -70,6 +70,10 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
+    Route::get('/maps/indoor', function () {
+    return view('maps.indoor');
+	})->name('maps.indoor');
+
 
     // Define the 'chat' route
     // 🤖 Chatbot (OpenAI-based)
