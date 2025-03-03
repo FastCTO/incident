@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container text-center">
-    <h1 class="mb-4">Live Camera Stream</h1>
+    <h1 class="mb-4">Live Camera Streaming</h1>
 
     <video id="video" width="100%" controls class="border"></video>
 

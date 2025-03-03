@@ -47,9 +47,9 @@
         // Add camera marker
         var cameraIcon = L.icon({
             iconUrl: "{{ asset('images/outside-click.png') }}",
-            iconSize: [40, 40],
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
+            iconSize: [126, 29],
+            iconAnchor: [63, 15],
+            popupAnchor: [0, -10]
         });
 
         L.marker([35.9184, -86.8992], { icon: cameraIcon }) // Adjust coords if needed

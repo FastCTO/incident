@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\IndoorMapController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/video', [VideoController::class, 'index'])->name('video.page');
     Route::get('/live-stream', [LiveStreamController::class, 'getLiveStream'])->name('live.stream');
     Route::get('/recorded-video', [VideoController::class, 'recorded'])->name('video.recorded'); // Placeholder
+    Route::get('/maps/indoor', [IndoorMapController::class, 'index'])->name('maps.indoor');
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');

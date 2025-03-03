@@ -1,36 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Indoor Map - New Hope Academy</h1>
-    <p><a href="{{ route('maps.index') }}" class="btn btn-secondary">Back to Outdoor Map</a></p>
 
-    <!-- Indoor Map -->
-    <div id="indoor-map">
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" 
-             xmlns:xlink="http://www.w3.org/1999/xlink" 
-             viewBox="0 0 1200 1200" style="width: 100%; height: 600px;">
-            <image width="2282" height="1182" xlink:href="{{ asset('images/map.png') }}"></image> 
-            <a xlink:href="/rooms/1">
-                <rect x="136" y="204" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-            <a xlink:href="/rooms/2">
-                <rect x="312" y="456" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-            <a xlink:href="/rooms/20">
-                <rect x="523" y="70" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-            <a xlink:href="/rooms/24">
-                <rect x="385" y="207" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-            <a xlink:href="/rooms/21">
-                <rect x="643" y="203" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-            <a xlink:href="/rooms/30">
-                <rect x="976" y="202" fill="#fff" opacity="0" width="100" height="100"></rect>
-            </a>
-        </svg>
+<div class="container text-center">
+
+    <!-- Header Information -->
+    <h1>Indoor Map - New Hope Academy</h1>
+    <p><strong>Rooms Occupied:</strong> {{ $occupiedRooms ?? 0 }} | <strong>Total People Inside:</strong> {{ $totalPeople ?? 0 }}</p>
+
+    <a href="{{ route('maps.index') }}" class="btn btn-dark">Back to Outdoor Map</a>
+
+    <!-- Indoor Map with Clickable Rooms -->
+    <div class="mt-3" style="position: relative; display: inline-block;">
+        <img src="{{ asset('images/map-indoor-corrected.png') }}" alt="Indoor Map" class="img-fluid">
+
+        @if(isset($rooms) && $rooms->count() > 0)
+            @foreach ($rooms as $index => $room)
+                <a href="{{ url('/rooms/' . $room->id) }}"
+                   style="position: absolute;
+                          left: {{ 950 + ($index % 2) * 100 }}px;
+                          top: {{ 320 + (intdiv($index, 2) * 80) }}px;
+                          width: 50px;
+                          height: 50px;
+                          background: rgba(255, 255, 0, 0.5);
+                          text-align: center;
+                          line-height: 50px;
+                          font-weight: bold;
+                          color: black;
+                          text-decoration: none;">
+                    {{ $room->current_occupancy ?? 0 }}
+                </a>
+            @endforeach
+        @else
+            <p class="text-danger">🚨 No room data available! Please check the database.</p>
+        @endif
     </div>
+
 </div>
+
 @endsection
 
