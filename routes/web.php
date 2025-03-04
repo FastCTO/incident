@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IndoorMapController;
+use App\Http\Controllers\MultiStreamController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -44,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/live-stream', [LiveStreamController::class, 'getLiveStream'])->name('live.stream');
     Route::get('/recorded-video', [VideoController::class, 'recorded'])->name('video.recorded'); // Placeholder
     Route::get('/maps/indoor', [IndoorMapController::class, 'index'])->name('maps.indoor');
+   // Route::get('/multi-stream', [VideoController::class, 'multiStream'])->name('video.multistream');
+       Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('video.multistream');
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
         Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');

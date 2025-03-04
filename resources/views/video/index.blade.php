@@ -6,7 +6,8 @@
     
     <div class="d-flex gap-3">
         <a href="{{ route('live.stream') }}" class="btn btn-primary">🎥 Live Stream</a>
-        <a href="{{ route('video.recorded') }}" class="btn btn-secondary">📹 Recorded Video</a>
+        <a href="{{ asset('images/doorwatch1.mp4') }}" class="btn btn-secondary" target="_blank">📹 Recorded Video</a>
+        <a href="{{ route('video.multistream') }}" class="btn btn-info">📡 Multi-Camera</a>
     </div>
 </div>
 @endsection
