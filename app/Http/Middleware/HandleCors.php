@@ -1,10 +1,23 @@
-public function handle($request, Closure $next)
-{
-    $response = $next($request);
-    $response->headers->set('Access-Control-Allow-Origin', '*');
-    $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+<?php
 
-    return $response;
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class HandleSessionTimeout
+{
+    public function handle(Request $request, Closure $next)
+    {
+        if (!Auth::check() && $request->isMethod('POST')) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Session expired. Please log in again.'], 419);
+            }
+            return redirect()->route('login')->with('error', 'Session expired. Please log in again.');
+        }
+
+        return $next($request);
+    }
 }
 

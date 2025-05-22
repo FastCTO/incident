@@ -34,6 +34,14 @@
                     <button type="submit" class="btn btn-danger">Send Emergency Text to Team</button>
                 </form>
             </div>
+
+            <!-- Database Corruption Simulation -->
+            <div class="mt-4">
+                <form method="POST" action="{{ route('school.management.simulateDbOutage') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-warning">Database Corruption Simulation</button>
+                </form>
+            </div>
         </div>
     </div>
 

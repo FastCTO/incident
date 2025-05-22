@@ -13,29 +13,27 @@ use Illuminate\Support\Facades\Log;
 
 class EmergencyController extends Controller
 {
-public function report()
-{
-    Log::info('📌 Emergency Report Page Loaded');
+    public function report()
+    {
+        Log::info('📌 Emergency Report Page Loaded');
 
-    $school = SchoolInfo::first();
-    $rooms = Room::all();
-    $roomLeaders = User::whereNotNull('home_room')->get();
+        $school = SchoolInfo::first();
+        $rooms = Room::all();
+        $roomLeaders = User::whereNotNull('home_room')->get();
 
-    $buildingOccupancy = Room::sum('current_occupancy');
-    $roomId = Auth::user()->home_room;
-    $room = Room::where('room_number', $roomId)->first();
-    $roomOccupancy = $room ? $room->current_occupancy : 0;
-    $roomsOccupied = Room::where('current_occupancy', '>', 0)->count();
-    
-    // ✅ Ensure this variable name matches the Blade template (`userMobile`)
-    $userMobile = Auth::user()->cell_number ?? 'Unknown';  
+        $buildingOccupancy = Room::sum('current_occupancy');
+        $roomId = Auth::user()->home_room;
+        $room = Room::where('room_number', $roomId)->first();
+        $roomOccupancy = $room ? $room->current_occupancy : 0;
+        $roomsOccupied = Room::where('current_occupancy', '>', 0)->count();
+        $userMobile = Auth::user()->cell_number ?? 'Unknown';
 
-    return view('emergency.report', compact(
-        'school', 'rooms', 'roomLeaders',
-        'roomOccupancy', 'buildingOccupancy',
-        'roomsOccupied', 'userMobile'  // ✅ Pass as `userMobile`
-    ));
-}
+        return view('emergency.report', compact(
+            'school', 'rooms', 'roomLeaders',
+            'roomOccupancy', 'buildingOccupancy',
+            'roomsOccupied', 'userMobile'
+        ));
+    }
 
     public function store(Request $request)
     {
@@ -44,17 +42,16 @@ public function report()
         try {
             $validated = $request->validate([
                 'emergency_type' => 'required|string',
-                'description' => 'required|string|max:255',
+                'description' => 'nullable|string|max:255',
                 'reporting_phone' => 'required|string',
                 'room_occupancy' => 'required|integer',
             ]);
 
             Log::info('✔ Validation Passed', ['validated' => $validated]);
 
-            // Store emergency in DB
             $emergency = Emergency::create([
                 'emergency_type' => $validated['emergency_type'],
-                'description' => $validated['description'],
+                'description' => $validated['description'] ?? '',
                 'reporting_phone' => $validated['reporting_phone'],
                 'reporting_user_id' => Auth::id(),
                 'room_occupancy' => $validated['room_occupancy'],
@@ -63,10 +60,8 @@ public function report()
 
             Log::info('✅ Emergency Stored in DB', ['emergency_id' => $emergency->id]);
 
-            // Update room occupancy
             $roomId = Auth::user()->home_room;
             $room = Room::where('room_number', $roomId)->first();
-
             if ($room) {
                 $room->current_occupancy = $validated['room_occupancy'];
                 $room->updated_at = now();
@@ -79,12 +74,18 @@ public function report()
                 Log::warning('⚠ Room Not Found, Occupancy Not Updated', ['room_id' => $roomId]);
             }
 
-            // Send SMS alert
-            Log::info('📲 Preparing to Send Emergency SMS');
+            $user = Auth::user();
+            $school = SchoolInfo::first();
+
             $smsSent = $this->sendEmergencySMS(
                 $validated['reporting_phone'],
                 $validated['emergency_type'],
-                $validated['description']
+                $validated['description'] ?? '',
+                $user->name ?? 'Unknown',
+                $validated['room_occupancy'],
+                Room::sum('current_occupancy'),
+                $school?->name ?? 'Unknown School',
+                $school?->address ?? 'Unknown Address'
             );
 
             if ($smsSent) {
@@ -100,7 +101,7 @@ public function report()
         }
     }
 
-    protected function sendEmergencySMS($cellNumber, $emergencyType, $description)
+    protected function sendEmergencySMS($cellNumber, $type, $description, $userName, $roomOccupancy, $schoolOccupancy, $schoolName, $schoolAddress)
     {
         try {
             Log::info('📡 Sending SMS to: ' . $cellNumber);
@@ -109,12 +110,19 @@ public function report()
                 $cellNumber = '1' . preg_replace('/\D/', '', $cellNumber);
             }
 
-            $message = "🚨 Emergency Alert: $emergencyType. Details: $description.";
+            $desc = $description ? "Notes: $description." : "No additional notes.";
+            $message = <<<MSG
+🚨 $type reported by $userName.
+School: $schoolName $schoolAddress
+Rooms Occupied: $roomOccupancy | Souls: $schoolOccupancy
+$desc
+MSG;
+
             $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0'; 
             $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';
 
             $payload = [
-                'from' => '19312230233',  
+                'from' => '19312230233',
                 'to' => [$cellNumber],
                 'body' => $message,
             ];
@@ -140,7 +148,7 @@ public function report()
 
             curl_close($ch);
 
-            return $httpCode >= 200 && $httpCode < 300; 
+            return $httpCode >= 200 && $httpCode < 300;
         } catch (\Exception $e) {
             Log::error('🚫 SMS sending failed: ' . $e->getMessage());
             return false;

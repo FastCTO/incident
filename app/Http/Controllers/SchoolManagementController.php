@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\SchoolInfo;
-use App\Models\ChatMessage; // Import ChatMessage model
+use App\Models\ChatMessage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 
 class SchoolManagementController extends Controller
 {
@@ -14,8 +15,8 @@ class SchoolManagementController extends Controller
      */
     public function index()
     {
-        $school = SchoolInfo::first(); // Assuming a single school record exists
-        $rooms = \App\Models\Room::with('users')->get(); // Adjust model namespace if needed
+        $school = SchoolInfo::first();
+        $rooms = \App\Models\Room::with('users')->get();
 
         return view('school-management.index', [
             'school' => $school,
@@ -47,10 +48,32 @@ class SchoolManagementController extends Controller
      */
     public function clearEmergencyChat()
     {
-        ChatMessage::truncate(); // Delete all chat messages
+        ChatMessage::truncate();
         Log::info('Emergency chat has been cleared.');
         
         return redirect()->route('school.management')->with('status', 'Emergency chat cleared successfully.');
     }
+
+    /**
+     * Simulate a database outage for 2 minutes.
+     */
+	public function simulateDbOutage()
+{
+    $currentUser = trim(shell_exec('whoami'));
+    Log::info("Laravel is executing as user: $currentUser");
+
+    Log::info('Simulating database outage... Running Python script.');
+
+    $scriptPath = '/home/fastcto/scripts/simulate_mysql_outage.py';
+
+    // Run script as fastcto user
+    $output = shell_exec("sudo -u fastcto /usr/bin/python3 $scriptPath 2>&1");
+
+    Log::info("Script Output: " . ($output ?: 'No output'));
+
+    return redirect()->route('school.management')->with('status', 'Database outage simulated.');
+}
+
+
 }
 

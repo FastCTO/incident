@@ -5,21 +5,13 @@
     <h1 class="mb-4">Multi-Camera Streaming</h1>
 
     <style>
-        /* Video Container for Rotation */
-        .video-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        /* Rotate Camera 2 & 3 */
+        /* Ensures that rotation does not interfere with layout */
         .invert-video {
             transform: rotate(180deg);
-            -webkit-transform: rotate(180deg); /* Safari */
-            -moz-transform: rotate(180deg); /* Mozilla */
-            -ms-transform: rotate(180deg); /* Microsoft */
-            -o-transform: rotate(180deg); /* Opera */
+            -webkit-transform: rotate(180deg);
+            -moz-transform: rotate(180deg);
+            -ms-transform: rotate(180deg);
+            -o-transform: rotate(180deg);
         }
     </style>
 
@@ -28,15 +20,13 @@
             @foreach ($streams as $key => $stream)
                 <div class="col-md-4">
                     <h3>Camera {{ $loop->index + 1 }}</h3>
-                    <div class="video-wrapper @if($loop->index == 1 || $loop->index == 2) invert-video @endif">
-                        <video 
-                            id="video-{{ $key }}" 
-                            width="100%" 
-                            controls 
-                            muted
-                            class="border">
-                        </video>
-                    </div>
+                    <video 
+                        id="video-{{ $key }}" 
+                        width="100%" 
+                        controls 
+                        muted
+                        class="border">
+                    </video>
                 </div>
             @endforeach
         </div>
@@ -57,6 +47,11 @@
             let videoSrc{{ $key }} = "{{ $stream }}"; // Unique variable for each camera
 
             console.log("Loading video for Camera {{ $loop->index + 1 }}:", videoSrc{{ $key }});
+
+            // Apply Rotation to Camera 2 & 3
+            if ({{ $loop->index }} === 1 || {{ $loop->index }} === 2) {
+                video{{ $key }}.classList.add('invert-video');
+            }
 
             if (Hls.isSupported()) {
                 let hls{{ $key }} = new Hls();

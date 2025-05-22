@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IndoorMapController;
 use App\Http\Controllers\MultiStreamController;
+use App\Http\Controllers\InvitePoliceController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -61,6 +62,22 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/send-text', [EmergencyController::class, 'sendEmergencyText'])->name('emergency.sendtext');
     });
 
+    Route::get('/invite-police/{token}', [InvitePoliceController::class, 'show'])->name('invite.police.show');
+	Route::post('/send-invite-police-link', function (\Illuminate\Http\Request $request) {
+    $request->validate(['phone' => 'required']);
+
+    $link = \App\Http\Controllers\InvitePoliceController::generateSecureLink();
+
+    // Sinch logic (reuse your working Sinch send method)
+    $sendResult = app('App\Http\Controllers\SMSController')->send(
+        $request->phone,
+        "Secure Police Link: $link\nThis link will expire in 90 minutes."
+    );
+
+    return back()->with('status', 'Link sent!');
+})->name('send.invite.police.link');
+
+
     Route::prefix('invite')->group(function () {
         Route::get('/', [InviteController::class, 'showForm'])->name('invite.form');
         Route::post('/', [InviteController::class, 'sendInvite'])->name('invite');
@@ -68,10 +85,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
 
-    Route::prefix('school-management')->group(function () {
-        Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
-        Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
-        Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])->name('school.management.clearChat');
+    Route::prefix('school-management')->middleware(['auth'])->group(function () {
+    Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
+    Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
+    Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])->name('school.management.clearChat');
+    Route::post('/simulate-db-outage', [SchoolManagementController::class, 'simulateDbOutage'])->name('school.management.simulateDbOutage');
     });
 
     Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
