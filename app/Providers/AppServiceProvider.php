@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,10 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-	    \DB::listen(function ($query) {
-    \Log::info($query->sql, $query->bindings);
-});
+        // 🔐 Force HTTPS for signed URL validation in production
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
 
-        
+        // 🐛 Log all SQL queries (for debug)
+        DB::listen(function ($query) {
+            Log::info($query->sql, $query->bindings);
+        });
     }
 }
+

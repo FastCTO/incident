@@ -1,8 +1,9 @@
+<?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
 
 class InvitePoliceController extends Controller
 {
@@ -15,12 +16,22 @@ class InvitePoliceController extends Controller
         return view('invite-police');
     }
 
+    // 🔗 Used to send police the main invite-police page
     public static function generateSecureLink()
     {
         return URL::temporarySignedRoute(
             'invite.police.show',
             now()->addMinutes(90),
             ['token' => uniqid()]
+        );
+    }
+
+    // 🎥 Used INSIDE the police link to render live cameras without login
+    public static function generateSecureMulticamUrl()
+    {
+        return URL::temporarySignedRoute(
+            'secure.multistream',
+            now()->addMinutes(90)
         );
     }
 }
