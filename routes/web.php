@@ -23,31 +23,34 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IndoorMapController;
 use App\Http\Controllers\MultiStreamController;
 use App\Http\Controllers\InvitePoliceController;
+use App\Http\Controllers\SMSController;
 
 Route::get('/', fn () => redirect()->route('home'));
 Auth::routes();
 
-
-// 🚓 Public: Secure Police Video Link
-
-
+// 🚓 Secure Police Video Link
 Route::get('/invite-police/{token}', [InvitePoliceController::class, 'show'])->name('invite.police.show');
 
-Route::post('/send-invite-police-link', function (Request $request) {
+Route::get('/send-police-link', function () {
+    return view('send-police-link');
+})->middleware('auth')->name('send.police.link.form');
+
+Route::post('/send-police-link', function (Request $request) {
     $request->validate(['phone' => 'required']);
 
     $link = InvitePoliceController::generateSecureLink();
 
-    app('App\Http\Controllers\SMSController')->send(
+    app(SMSController::class)->send(
         $request->phone,
         "Secure Police Link: $link\nThis link will expire in 90 minutes."
     );
 
-    return back()->with('status', 'Link sent!');
-})->name('send.invite.police.link');
+    return back()->with('status', 'Secure police video link sent!');
+})->middleware('auth')->name('send.police.link');
 
-	Route::get('/secure-multistream', [MultiStreamController::class, 'secure'])->name('secure.multistream');
-    Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('video.multistream');
+// Existing secure and multi-stream
+Route::get('/secure-multistream', [MultiStreamController::class, 'secure'])->name('secure.multistream');
+Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('video.multistream');
 
 // 🛡️ Authenticated Routes
 Route::middleware(['auth'])->group(function () {
@@ -142,4 +145,5 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login')->with('status', 'Logged out successfully');
     })->name('logout');
 });
+
 
