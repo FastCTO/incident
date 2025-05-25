@@ -33,7 +33,7 @@ class InviteController extends Controller
             return back()->withErrors($e->errors());
         }
 
-        $token = bin2hex(random_bytes(16)); // Generate a token
+        $token = bin2hex(random_bytes(16));
 
         Invite::create([
             'first_name' => $request->first_name,
@@ -64,7 +64,7 @@ class InviteController extends Controller
             $message = "You're invited! Use this link to create your account: " .
                        url('/register?token=' . $token);
 
-            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0';  // Replace with your actual API key
+            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0';
             $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';
 
             $payload = [
@@ -100,6 +100,55 @@ class InviteController extends Controller
             curl_close($ch);
         } catch (\Exception $e) {
             Log::error('SMS sending failed: ' . $e->getMessage());
+        }
+    }
+
+    // 🔥 NEW: Secure police video invite SMS logic
+    public static function sendPoliceVideoInviteSMS($cellNumber, $link)
+    {
+        try {
+            if (!str_starts_with($cellNumber, '1')) {
+                $cellNumber = '1' . $cellNumber;
+            }
+
+            $message = "🚓 Secure Police Video Link: $link\nThis link will expire in 90 minutes.";
+
+            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0';
+            $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';
+
+            $payload = [
+                'from' => '19312230233',
+                'to' => [$cellNumber],
+                'body' => $message,
+            ];
+
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $bearerToken,
+                'Content-Type: application/json',
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            Log::info("🚓 Police Video SMS API Response: HTTP $httpCode - $response");
+
+            if (curl_errno($ch)) {
+                Log::error('🚫 Police Video cURL error: ' . curl_error($ch));
+                throw new \Exception('cURL error: ' . curl_error($ch));
+            }
+
+            if ($httpCode >= 400) {
+                Log::error('🚫 Failed to send Police Video SMS: ' . $response);
+                throw new \Exception('Failed to send Police Video SMS: ' . $response);
+            }
+
+            curl_close($ch);
+        } catch (\Exception $e) {
+            Log::error('🚫 Police Video SMS sending failed: ' . $e->getMessage());
         }
     }
 }

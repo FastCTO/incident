@@ -23,30 +23,32 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IndoorMapController;
 use App\Http\Controllers\MultiStreamController;
 use App\Http\Controllers\InvitePoliceController;
-use App\Http\Controllers\SMSController;
 
 Route::get('/', fn () => redirect()->route('home'));
 Auth::routes();
 
 // 🚓 Secure Police Video Link
-Route::get('/invite-police/{token}', [InvitePoliceController::class, 'show'])->name('invite.police.show');
-
-Route::get('/send-police-link', function () {
-    return view('send-police-link');
-})->middleware('auth')->name('send.police.link.form');
 
 Route::post('/send-police-link', function (Request $request) {
     $request->validate(['phone' => 'required']);
 
-    $link = InvitePoliceController::generateSecureLink();
+    $phone = preg_replace('/\D/', '', $request->phone);
+    if (strlen($phone) == 10) {
+        $phone = '1' . $phone;
+    }
 
-    app(SMSController::class)->send(
-        $request->phone,
-        "Secure Police Link: $link\nThis link will expire in 90 minutes."
-    );
+    $link = App\Http\Controllers\InvitePoliceController::generateSecureMulticamUrl();
+
+    Log::info("🚓 Final secure link generated for police: $link");
+
+    // ✅ Use the new working method from InviteController
+    App\Http\Controllers\InviteController::sendPoliceVideoInviteSMS($phone, $link);
 
     return back()->with('status', 'Secure police video link sent!');
 })->middleware('auth')->name('send.police.link');
+
+
+
 
 // Existing secure and multi-stream
 Route::get('/secure-multistream', [MultiStreamController::class, 'secure'])->name('secure.multistream');
@@ -54,7 +56,6 @@ Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('vide
 
 // 🛡️ Authenticated Routes
 Route::middleware(['auth'])->group(function () {
-    // Dashboard & Home
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -145,5 +146,4 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login')->with('status', 'Logged out successfully');
     })->name('logout');
 });
-
 

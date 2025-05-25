@@ -3,55 +3,54 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 
 class SMSController extends Controller
 {
     public static function send($phone, $message)
     {
         try {
-            // Sinch API details
-            $service_plan_id = '0986c99adc6346249028b5a5d5543331';
-            $bearer_token = '0b75f8d79d7d40cb9f7003e5498c29f0';
-            $send_from = '12085815118';
-
-            // Normalize phone number to ensure it’s 11 digits starting with 1 (US/Canada)
-            $normalized = preg_replace('/\D/', '', $phone); // Remove non-digits
-            if (strlen($normalized) === 10) {
-                $normalized = '1' . $normalized;
-            } elseif (strlen($normalized) === 11 && $normalized[0] !== '1') {
-                $normalized = '1' . substr($normalized, 1);
+            // 📞 Ensure country code '1' is prepended if missing
+            if (!str_starts_with($phone, '1')) {
+                $phone = '1' . $phone;
             }
 
-            // Validate final phone format
-            if (!preg_match('/^1\d{10}$/', $normalized)) {
-                Log::error("🚫 Invalid phone number after normalization: {$phone}");
-                throw new \Exception('Invalid phone number format.');
-            }
+            $bearerToken = '0b75f8d79d7d40cb9f7003e5498c29f0'; // Replace with your actual API key
+            $apiUrl = 'https://sms.api.sinch.com/xms/v1/0986c99adc6346249028b5a5d5543331/batches';
 
-            // Prepare the JSON payload
             $payload = [
-                'to' => [$normalized],
-                'from' => $send_from,
+                'from' => '19312230233', // Replace with your actual number
+                'to' => [$phone],
                 'body' => $message,
             ];
 
-            // Send the request to Sinch API
-            $response = Http::withToken($bearer_token)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post("https://us.sms.api.sinch.com/xms/v1/{$service_plan_id}/batches", $payload);
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $bearerToken,
+                'Content-Type: application/json',
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
-            // Log and handle response
-            Log::info("✅ (Sinch) SMS sent to {$normalized}: {$message}");
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            if ($response->failed()) {
-                Log::error('🚫 Sinch SMS sending failed: ' . $response->body());
-                throw new \Exception('Failed to send SMS: ' . $response->body());
+            Log::info("🚓 Police SMS API Response: HTTP $httpCode - $response");
+
+            if (curl_errno($ch)) {
+                Log::error('🚫 cURL error: ' . curl_error($ch));
+                throw new \Exception('cURL error: ' . curl_error($ch));
             }
 
-            return true;
+            if ($httpCode >= 400) {
+                Log::error('🚫 Failed to send police SMS: ' . $response);
+                throw new \Exception('Failed to send police SMS: ' . $response);
+            }
+
+            curl_close($ch);
+
         } catch (\Exception $e) {
-            Log::error('🚫 SMS sending error: ' . $e->getMessage());
+            Log::error('🚫 Police SMS sending failed: ' . $e->getMessage());
             throw $e;
         }
     }
