@@ -11,6 +11,7 @@ class InviteController extends Controller
 {
     public function showForm()
     {
+        // Render the invite form view
         return view('invite');
     }
 
@@ -103,7 +104,7 @@ class InviteController extends Controller
         }
     }
 
-    // 🔥 NEW: Secure police video invite SMS logic
+    // 🔥 New: Secure police video invite logic
     public static function sendPoliceVideoInviteSMS($cellNumber, $link)
     {
         try {

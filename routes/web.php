@@ -29,6 +29,7 @@ Auth::routes();
 
 // 🚓 Secure Police Video Link
 
+
 Route::post('/send-police-link', function (Request $request) {
     $request->validate(['phone' => 'required']);
 
@@ -42,11 +43,10 @@ Route::post('/send-police-link', function (Request $request) {
     Log::info("🚓 Final secure link generated for police: $link");
 
     // ✅ Use the new working method from InviteController
-    App\Http\Controllers\InviteController::sendPoliceVideoInviteSMS($phone, $link);
+    InviteController::sendPoliceVideoInviteSMS($phone, $link);
 
     return back()->with('status', 'Secure police video link sent!');
 })->middleware('auth')->name('send.police.link');
-
 
 
 

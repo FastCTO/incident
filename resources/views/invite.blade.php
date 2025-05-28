@@ -2,70 +2,58 @@
 
 @section('content')
 <div class="container">
-    <div class="row justify-content-center">
-        <!-- Invite New User Card -->
-        <div class="col-md-6 mb-4">
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
+    <h1>Invite a New User</h1>
 
-            <div class="card">
-                <div class="card-header">Send Invite to New User</div>
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
-                <div class="card-body">
-                    <form action="{{ route('invite') }}" method="POST">
-                        @csrf
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>@foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach</ul>
+        </div>
+    @endif
 
-                        <div class="mb-3">
-                            <label for="first_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="last_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="cell_number" class="form-label">Cell Number</label>
-                            <input type="text" class="form-control" id="cell_number" name="cell_number" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email (optional)</label>
-                            <input type="email" class="form-control" id="email" name="email">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Send Invite</button>
-                    </form>
-                </div>
-            </div>
+    <!-- User Invite Form -->
+    <form method="POST" action="{{ route('invite') }}" class="mb-5 p-4 bg-light border rounded">
+        @csrf
+        <h3 class="mb-3">Send Invite to New User</h3>
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" name="first_name" required class="form-control">
         </div>
 
-        <!-- Send Police Link Card -->
-        <div class="col-md-6 mb-4">
-            @if(session('status'))
-                <div class="alert alert-success">{{ session('status') }}</div>
-            @endif
-
-            <div class="card">
-                <div class="card-header">Send Video Invite to Police</div>
-
-                <div class="card-body">
-                    <form action="{{ route('send.police.link') }}" method="POST">
-                        @csrf
-
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Cell Number</label>
-                            <input type="text" class="form-control" id="phone" name="phone" placeholder="10-digit number" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">Send Police Link</button>
-                    </form>
-                </div>
-            </div>
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" name="last_name" required class="form-control">
         </div>
-    </div>
+
+        <div class="form-group">
+            <label for="cell_number">Cell Number</label>
+            <input type="text" name="cell_number" required class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email (optional)</label>
+            <input type="email" name="email" class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Send User Invite</button>
+    </form>
+
+    <!-- Police Video Link Invite Form -->
+    <form method="POST" action="{{ route('send.police.link') }}" class="p-4 bg-light border rounded">
+        @csrf
+        <h3 class="mb-3">🚓 Send Police Video Link (expires in 90 minutes)</h3>
+        <div class="form-group">
+            <label for="phone">Police Cell Number</label>
+            <input type="text" name="phone" required class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-danger mt-3">Send Police Link</button>
+    </form>
 </div>
 @endsection
 
