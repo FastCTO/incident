@@ -18,7 +18,7 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    🚓 Send Video Invite to Police
+                    🚓 Send Video Invite to Police - Expires in 90 Minutes
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('send.police.link') }}">
