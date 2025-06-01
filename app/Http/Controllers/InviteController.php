@@ -6,9 +6,32 @@ use App\Models\Invite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class InviteController extends Controller
 {
+	public function sendVideoAccessLog($videoId, $hash, $viewerId)
+{
+    $senderId = Auth::id();
+
+    $data = [
+        'videoId' => $videoId,
+        'hash' => $hash,
+        'viewerId' => $viewerId,
+        'senderId' => $senderId,
+    ];
+
+    $apiUrl = 'https://3061sy2r1b.execute-api.us-west-2.amazonaws.com/production/video';
+
+    $response = Http::withHeaders([
+        'x-api-key' => env('AWS_API_KEY'),
+        'Content-Type' => 'application/json',
+    ])->post($apiUrl, $data);
+
+    Log::info('Lambda response: ' . $response->body());
+
+    return $response->json();
+}
     public function showForm()
     {
         // Render the invite form view

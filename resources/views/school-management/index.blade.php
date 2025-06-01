@@ -34,6 +34,10 @@
                     <button type="submit" class="btn btn-danger">Send Emergency Text to Team</button>
                 </form>
             </div>
+<!-- View Video Logs -->
+<div class="mt-4">
+    <a href="{{ route('video.logs') }}" class="btn btn-info">View Video Access Logs</a>
+</div>
 
             <!-- Database Corruption Simulation -->
             <div class="mt-4">

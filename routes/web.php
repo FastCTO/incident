@@ -23,6 +23,7 @@ use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IndoorMapController;
 use App\Http\Controllers\MultiStreamController;
 use App\Http\Controllers\InvitePoliceController;
+use App\Http\Controllers\VideoLogController;
 
 Route::get('/', fn () => redirect()->route('home'));
 Auth::routes();
@@ -58,7 +59,7 @@ Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('vide
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+	Route::get('/video-logs', [VideoLogController::class, 'index'])->middleware('auth')->name('video.logs');
     // Video
     Route::get('/video', [VideoController::class, 'index'])->name('video.page');
     Route::get('/recorded-video', [VideoController::class, 'recorded'])->name('video.recorded');
