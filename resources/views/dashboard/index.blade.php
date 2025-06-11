@@ -14,16 +14,15 @@
         </div>
     </div>
 
-    {{-- Summary Cards - Responsive Stack --}}
+    {{-- Summary Cards --}}
     <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
 
-        {{-- Status Box (Colored per status) --}}
+        {{-- Status Box --}}
         @php
             $statusColors = [
                 'Normal' => 'bg-success text-white',
                 'Lockdown' => 'bg-warning text-dark',
-                'Tornado Shelter' => 'bg-secondary text-white',
-                'Evacuation' => 'bg-info text-dark',
+                'Emergency' => 'bg-primary text-white',
                 'Active Shooter' => 'bg-danger text-white',
             ];
             $cardColor = $statusColors[$school->status] ?? 'bg-light';
@@ -41,7 +40,7 @@
             </div>
         </div>
 
-        {{-- Report Emergency --}}
+        {{-- Emergency Report --}}
         <div class="col">
             <div class="card text-center shadow-sm">
                 <div class="card-body">
@@ -79,7 +78,6 @@
         </div>
 
     </div>
-
 </div>
 @endsection
 
