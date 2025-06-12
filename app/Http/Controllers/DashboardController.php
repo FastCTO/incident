@@ -19,6 +19,7 @@ class DashboardController extends Controller
         $userRoom = $user->home_room ? Room::where('room_number', $user->home_room)->first() : null;
 
         // Pass all required data to the view
+	$isRoomLeader = $userRoom !== null;
         return view('dashboard.index', compact(
             'school', 'roomsOccupied', 'peopleInBuilding', 
             'emergencyStatus', 'userRoom'
