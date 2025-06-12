@@ -1,11 +1,10 @@
-{{-- resources/views/invite.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
 <div class="container py-4">
-    <h1 class="mb-4 h3 text-center">Send Invites</h1>
+    <h1 class="text-center mb-4">Send Invites</h1>
 
-    {{-- ✅ Flash success message for both forms --}}
+    {{-- ✅ Flash success message --}}
     @if (session('status'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('status') }}
@@ -13,12 +12,13 @@
         </div>
     @endif
 
-    <div class="row">
-        <!-- Box 1: Send Video Invite to Police -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    🚓 Send Video Invite to Police - Expires in 90 Minutes
+    <div class="row g-4 align-items-stretch">
+
+        {{-- 🚓 Police Video Invite --}}
+        <div class="col-md-6">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-header bg-primary text-white fs-5">
+                    🚓 Send Video Invite to Police – Expires in 90 Minutes
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('send.police.link') }}">
@@ -27,16 +27,16 @@
                             <label for="police_phone" class="form-label">Phone Number</label>
                             <input type="text" id="police_phone" name="phone" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Send Police Video Link</button>
+                        <button type="submit" class="btn btn-primary w-100 fs-5">Send Police Video Link</button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Box 2: Send Invite to New User -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
+        {{-- 📨 Standard User Invite --}}
+        <div class="col-md-6">
+            <div class="card h-100 border-success shadow-sm">
+                <div class="card-header bg-success text-white fs-5">
                     📨 Send Invite to New User
                 </div>
                 <div class="card-body">
@@ -58,11 +58,12 @@
                             <label for="email" class="form-label">Email (optional)</label>
                             <input type="email" id="email" name="email" class="form-control">
                         </div>
-                        <button type="submit" class="btn btn-success w-100">Send Invite</button>
+                        <button type="submit" class="btn btn-success w-100 fs-5">Send Invite</button>
                     </form>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 @endsection
