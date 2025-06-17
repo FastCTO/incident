@@ -76,12 +76,15 @@ Route::middleware(['auth'])->group(function () {
     // Rooms
     Route::prefix('rooms')->group(function () {
         Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
+	Route::get('/home', [RoomController::class, 'roomHome'])->name('rooms.home');
         Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');
         Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
         Route::put('/{id}', [RoomController::class, 'update'])->name('rooms.update');
         Route::delete('/{roomId}/teacher/{teacherId}', [RoomController::class, 'removeTeacher'])->name('rooms.teacher.remove');
     });
 
+    // AJAX update (outside rooms prefix)
+	Route::post('/ajax-update', [RoomController::class, 'ajaxUpdate'])->name('rooms.ajaxUpdate');
     // Maps
     Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
     Route::get('/maps/indoor', [IndoorMapController::class, 'index'])->name('maps.indoor');

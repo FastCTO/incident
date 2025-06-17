@@ -13,7 +13,7 @@ class RoomController extends Controller
     public function index()
     {
         $rooms = Room::all();
-        $school = SchoolInfo::first(); // ✅ fetch school row
+        $school = SchoolInfo::first();
 
         $schoolStatus = $school?->status ?? 'Unknown';
         Log::info("🧪 School status on Room Dashboard: " . ($school?->status ?? 'NULL'));
@@ -27,6 +27,29 @@ class RoomController extends Controller
             'school' => $school,
             'userCounts' => $userCounts,
             'schoolStatus' => $schoolStatus,
+            'totalRooms' => $rooms->count(),
+            'totalOccupiedRooms' => $rooms->where('current_occupancy', '>', 0)->count(),
+            'totalPeople' => $rooms->sum('current_occupancy'),
+        ]);
+    }
+
+    public function roomHome()
+    {
+        $rooms = Room::all();
+        $school = SchoolInfo::first();
+        $schoolStatus = $school?->status ?? 'Unknown';
+
+        $userCounts = User::selectRaw('role, COUNT(*) as total')
+            ->groupBy('role')
+            ->pluck('total', 'role');
+
+        Log::info("🧪 School status on Room Home: " . $schoolStatus);
+
+        return view('rooms.room-home', [
+            'rooms' => $rooms,
+            'school' => $school,
+            'schoolStatus' => $schoolStatus,
+            'userCounts' => $userCounts,
             'totalRooms' => $rooms->count(),
             'totalOccupiedRooms' => $rooms->where('current_occupancy', '>', 0)->count(),
             'totalPeople' => $rooms->sum('current_occupancy'),
@@ -84,7 +107,8 @@ class RoomController extends Controller
 
         Log::info('Room after update: ', $room->toArray());
 
-        return redirect()->route('rooms.show', $id)->with('status', 'Room details updated successfully.');
+	return redirect()->route('rooms.home')->with('status', 'Room updated successfully.');
+
     }
 
     public function maps()
