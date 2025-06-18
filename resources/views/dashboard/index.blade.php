@@ -66,13 +66,14 @@
         </div>
         @endif
 
-        {{-- People Inside --}}
+        {{-- People Inside + View All Rooms Button --}}
         <div class="col">
             <div class="card text-center shadow-sm">
                 <div class="card-body">
                     <div class="mb-2 fs-1">👥</div>
                     <h5 class="card-title">People Inside</h5>
                     <p class="fs-4">{{ $peopleInBuilding }}</p>
+                    <a href="{{ route('rooms.home') }}" class="btn btn-outline-primary btn-sm mt-2">View All Rooms</a>
                 </div>
             </div>
         </div>
