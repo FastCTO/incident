@@ -1,144 +1,47 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Request;
 
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\EmergencyController;
-use App\Http\Controllers\InviteController;
-use App\Http\Controllers\GuestController;
-use App\Http\Controllers\SchoolManagementController;
-use App\Http\Controllers\ChatController;
-use App\Http\Controllers\EmergencyChatController;
-use App\Http\Controllers\CriticalCareController;
-use App\Http\Controllers\WaveAuthController;
-use App\Http\Controllers\WaveCameraController;
-use App\Http\Controllers\LiveStreamController;
-use App\Http\Controllers\VideoController;
-use App\Http\Controllers\IndoorMapController;
-use App\Http\Controllers\MultiStreamController;
-use App\Http\Controllers\InvitePoliceController;
-use App\Http\Controllers\VideoLogController;
+use App\Http\Controllers\IncidentController;
 
-Route::get('/', fn () => redirect()->route('home'));
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| FSV Incident V1 - Safe Mode
+|
+| Dashboard/Home are temporarily redirected to Incidents while we clean
+| old Guardian Cloud controller/view code.
+|
+*/
+
+Route::get('/', function () {
+    return redirect()->route('incidents.index');
+});
+
 Auth::routes();
 
-// 🚓 Secure Police Video Link
-
-
-Route::post('/send-police-link', function (Request $request) {
-    $request->validate(['phone' => 'required']);
-
-    $phone = preg_replace('/\D/', '', $request->phone);
-    if (strlen($phone) == 10) {
-        $phone = '1' . $phone;
-    }
-
-    $link = App\Http\Controllers\InvitePoliceController::generateSecureMulticamUrl();
-
-    Log::info("🚓 Final secure link generated for police: $link");
-
-    // ✅ Use the new working method from InviteController
-    InviteController::sendPoliceVideoInviteSMS($phone, $link);
-
-    return back()->with('status', 'Secure police video link sent!');
-})->middleware('auth')->name('send.police.link');
-
-
-
-// Existing secure and multi-stream
-Route::get('/secure-multistream', [MultiStreamController::class, 'secure'])->name('secure.multistream');
-Route::get('/multi-stream', [MultiStreamController::class, 'index'])->name('video.multistream');
-
-// 🛡️ Authenticated Routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-	Route::get('/video-logs', [VideoLogController::class, 'index'])->middleware('auth')->name('video.logs');
-    // Video
-    Route::get('/video', [VideoController::class, 'index'])->name('video.page');
-    Route::get('/recorded-video', [VideoController::class, 'recorded'])->name('video.recorded');
-    Route::get('/live-stream', [LiveStreamController::class, 'getLiveStream'])->name('live.stream');
-    Route::get('/get-camera-stream', [WaveCameraController::class, 'getStreamUrls'])->name('camera.stream');
+    Route::get('/home', function () {
+        return redirect()->route('incidents.index');
+    })->name('home');
 
-    // Emergency Reporting
-    Route::prefix('emergency')->group(function () {
-        Route::get('/report', [EmergencyController::class, 'report'])->name('emergency.report');
-        Route::post('/report', [EmergencyController::class, 'store'])->name('emergency.store');
-        Route::post('/send-text', [EmergencyController::class, 'sendEmergencyText'])->name('emergency.sendtext');
-    });
+    Route::get('/dashboard', function () {
+        return redirect()->route('incidents.index');
+    })->name('dashboard');
 
-    // Rooms
-    Route::prefix('rooms')->group(function () {
-        Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
-	Route::get('/home', [RoomController::class, 'roomHome'])->name('rooms.home');
-        Route::get('/{id}', [RoomController::class, 'show'])->name('rooms.show');
-        Route::get('/{id}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-        Route::put('/{id}', [RoomController::class, 'update'])->name('rooms.update');
-        Route::delete('/{roomId}/teacher/{teacherId}', [RoomController::class, 'removeTeacher'])->name('rooms.teacher.remove');
-    });
+    Route::resource('incidents', IncidentController::class);
 
-    // AJAX update (outside rooms prefix)
-	Route::post('/ajax-update', [RoomController::class, 'ajaxUpdate'])->name('rooms.ajaxUpdate');
-    // Maps
-    Route::get('/maps', [RoomController::class, 'maps'])->name('maps.index');
-    Route::get('/maps/indoor', [IndoorMapController::class, 'index'])->name('maps.indoor');
-
-    // Invite System
-    Route::prefix('invite')->group(function () {
-        Route::get('/', [InviteController::class, 'showForm'])->name('invite.form');
-        Route::post('/', [InviteController::class, 'sendInvite'])->name('invite');
-    });
-
-    // Guests
-    Route::post('/guests', [GuestController::class, 'store'])->name('guests.store');
-
-    // School Management
-    Route::prefix('school-management')->group(function () {
-        Route::get('/', [SchoolManagementController::class, 'index'])->name('school.management');
-        Route::put('/update', [SchoolManagementController::class, 'update'])->name('school.management.update');
-        Route::post('/clear-chat', [SchoolManagementController::class, 'clearEmergencyChat'])->name('school.management.clearChat');
-        Route::post('/simulate-db-outage', [SchoolManagementController::class, 'simulateDbOutage'])->name('school.management.simulateDbOutage');
-    });
-
-    // Chat Interfaces
-    Route::prefix('chat')->group(function () {
-        Route::get('/', fn () => view('chat'))->name('chat');
-        Route::post('/', [ChatController::class, 'sendMessage'])->name('chat.send');
-    });
-
-    Route::prefix('emergency-chat')->group(function () {
-        Route::get('/', [EmergencyChatController::class, 'index'])->name('emergency.chat');
-        Route::post('/send', [EmergencyChatController::class, 'sendMessage'])->name('emergency.chat.send');
-        Route::get('/fetch', [EmergencyChatController::class, 'fetchMessages'])->name('emergency.chat.fetch');
-    });
-
-    // Critical Care
-    Route::get('/critical-care', [CriticalCareController::class, 'index'])->name('critical-care');
-
-    // Wave Auth
-    Route::post('/wave-auth', [WaveAuthController::class, 'authenticate'])->name('wave.auth');
-
-    // Force Refresh
-    Route::match(['get', 'post'], '/force-refresh', function () {
-        app(WaveAuthController::class)->authenticate();
-        app(WaveCameraController::class)->getStreamUrls();
-        return redirect()->route('live.stream');
-    })->name('force.refresh');
-
-    // Logout
     Route::post('/logout', function (Request $request) {
         $user = Auth::user();
+
         if ($user) {
-            Log::info("🚪 User {$user->id} logging out. Clearing cache.");
-            apcu_delete("wave_token_{$user->id}");
-            apcu_delete("wave_stream_hd_{$user->id}");
-            apcu_delete("wave_stream_sd_{$user->id}");
+            Log::info("User {$user->id} logging out of FSV Incident.");
         }
 
         Session::flush();
@@ -147,7 +50,6 @@ Route::middleware(['auth'])->group(function () {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with('status', 'Logged out successfully');
+        return redirect('/login')->with('status', 'Logged out successfully.');
     })->name('logout');
 });
-
