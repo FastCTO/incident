@@ -4,33 +4,19 @@
     <meta charset="UTF-8">
     <title>Edit Incident - FSV Incident</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f8; color: #111827; margin: 0; padding: 30px; }
-        .wrap { max-width: 900px; margin: 0 auto; }
-        .card { background: #fff; border-radius: 10px; padding: 24px; border: 1px solid #e5e7eb; margin-bottom: 20px; }
-        h1 { margin-top: 0; }
-        label { display: block; font-weight: bold; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; }
-        textarea { min-height: 110px; }
-        .field { margin-bottom: 18px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        .btn { display: inline-block; background: #1d4ed8; color: white; padding: 10px 14px; border-radius: 6px; text-decoration: none; font-weight: bold; border: 0; cursor: pointer; font-size: 15px; }
-        .btn-secondary { background: #e5e7eb; color: #111827; margin-left: 8px; }
-        .error { color: #b91c1c; font-size: 14px; margin-top: 6px; }
-        .logo { max-height: 70px; width: auto; }
-        .header-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
-    </style>
+    @include('incidents._styles')
 </head>
 <body>
     <div class="wrap">
+        @include('incidents._topnav')
+
         <div class="card">
             <div class="header-row">
                 <div>
                     <h1>Edit Incident</h1>
                     <p>Update incident record #{{ $incident->id }}.</p>
                 </div>
+
                 <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
             </div>
         </div>
@@ -50,6 +36,7 @@
                     <div class="field">
                         <label for="incident_type">Incident Type</label>
                         @php $selectedType = old('incident_type', $incident->incident_type); @endphp
+
                         <select name="incident_type" id="incident_type">
                             <option value="">Select type</option>
                             <option value="Theft" {{ $selectedType === 'Theft' ? 'selected' : '' }}>Theft</option>
@@ -65,6 +52,7 @@
                     <div class="field">
                         <label for="status">Status</label>
                         @php $selectedStatus = old('status', $incident->status); @endphp
+
                         <select name="status" id="status" required>
                             <option value="open" {{ $selectedStatus === 'open' ? 'selected' : '' }}>Open</option>
                             <option value="reviewing" {{ $selectedStatus === 'reviewing' ? 'selected' : '' }}>Reviewing</option>
