@@ -3,6 +3,25 @@
 @section('title', 'Incidents - FSV Incident')
 
 @section('content')
+    @php
+        function sort_link($label, $column, $currentSort, $currentDirection) {
+            $nextDirection = ($currentSort === $column && $currentDirection === 'asc') ? 'desc' : 'asc';
+
+            $arrow = '';
+
+            if ($currentSort === $column) {
+                $arrow = $currentDirection === 'asc' ? ' ▲' : ' ▼';
+            } else {
+                $arrow = ' ⇅';
+            }
+
+            return '<a class="sort-link" href="' . route('incidents.index', [
+                'sort' => $column,
+                'direction' => $nextDirection,
+            ]) . '">' . e($label . $arrow) . '</a>';
+        }
+    @endphp
+
     <div class="card">
         <div class="header-row">
             <div>
@@ -22,25 +41,40 @@
 
     <div class="card">
         <div class="header-row" style="margin-bottom: 20px;">
-            <h2>Incidents</h2>
-            <a href="{{ route('incidents.create') }}" class="btn">New Incident</a>
+            <div>
+                <h2>Incidents</h2>
+                <p style="margin-top: -8px;">
+                    Default sort is newest incident first. Click a column header to sort.
+                </p>
+            </div>
+
+            <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
+                @csrf
+                <button type="submit" class="btn">Start New Incident</button>
+            </form>
         </div>
 
         @if($incidents->count())
             <table>
                 <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                        <th>Date/Time</th>
+                        <th>{!! sort_link('Incident #', 'id', $sort, $direction) !!}</th>
+                        <th>{!! sort_link('Title', 'title', $sort, $direction) !!}</th>
+                        <th>{!! sort_link('Type', 'type', $sort, $direction) !!}</th>
+                        <th>{!! sort_link('Status', 'status', $sort, $direction) !!}</th>
+                        <th>{!! sort_link('Location', 'location', $sort, $direction) !!}</th>
+                        <th>{!! sort_link('Date/Time', 'datetime', $sort, $direction) !!}</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($incidents as $incident)
                         <tr>
+                            <td>
+                                <a href="{{ route('incidents.show', $incident) }}">
+                                    Incident #{{ $incident->id }}
+                                </a>
+                            </td>
                             <td>
                                 <a href="{{ route('incidents.show', $incident) }}">
                                     {{ $incident->title }}
@@ -66,8 +100,12 @@
         @else
             <div class="empty">
                 <h3>No incidents yet</h3>
-                <p>Create the first incident to start building the evidence workflow.</p>
-                <a href="{{ route('incidents.create') }}" class="btn">Create Incident</a>
+                <p>Start the first incident to begin building the evidence workflow.</p>
+
+                <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
+                    @csrf
+                    <button type="submit" class="btn">Start New Incident</button>
+                </form>
             </div>
         @endif
     </div>

@@ -41,6 +41,21 @@
         text-decoration: underline;
     }
 
+    .nav-button-link {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        color: #1d4ed8;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+    }
+
+    .nav-button-link:hover {
+        text-decoration: underline;
+    }
+
     .logout-button {
         background: #e5e7eb;
         color: #111827;
@@ -145,6 +160,17 @@
 
     a {
         color: #1d4ed8;
+    }
+
+    .sort-link {
+        color: #374151;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .sort-link:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
     }
 
     .empty {

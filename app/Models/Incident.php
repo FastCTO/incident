@@ -24,4 +24,9 @@ class Incident extends Model
     protected $casts = [
         'incident_datetime' => 'datetime',
     ];
+
+    public function files()
+    {
+        return $this->hasMany(IncidentFile::class)->latest();
+    }
 }

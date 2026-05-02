@@ -7,16 +7,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\IncidentFileController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 |
-| FSV Incident V1 - Safe Mode
-|
-| Dashboard/Home are temporarily redirected to Incidents while we clean
-| old Guardian Cloud controller/view code.
+| FSV Incident V1
 |
 */
 
@@ -35,7 +33,16 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('incidents.index');
     })->name('dashboard');
 
+    Route::post('/incidents/start', [IncidentController::class, 'start'])
+        ->name('incidents.start');
+
     Route::resource('incidents', IncidentController::class);
+
+    Route::post('/incidents/{incident}/files', [IncidentFileController::class, 'store'])
+        ->name('incidents.files.store');
+
+    Route::delete('/incidents/{incident}/files/{file}', [IncidentFileController::class, 'destroy'])
+        ->name('incidents.files.destroy');
 
     Route::post('/logout', function (Request $request) {
         $user = Auth::user();

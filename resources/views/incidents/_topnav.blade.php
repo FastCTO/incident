@@ -1,8 +1,14 @@
 <div class="top-nav">
     <div class="top-nav-left">
         <strong>FSV Incident</strong>
+
         <a href="{{ route('incidents.index') }}">Incidents</a>
-        <a href="{{ route('incidents.create') }}">New Incident</a>
+
+        <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
+            @csrf
+            <button type="submit" class="nav-button-link">Start New Incident</button>
+        </form>
+
         <a href="{{ route('dashboard') }}">Dashboard</a>
     </div>
 
