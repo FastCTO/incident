@@ -1,109 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-	<meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Guardian Cloud</title>
+    <title>@yield('title', 'FSV Incident')</title>
 
-    <link rel="icon" href="{{ asset('logo.png') }}" type="image/png">
-	{{-- <meta name="csrf-token" content="{{ csrf_token() }}"> <-- DELETE THIS DUPLICATE LINE --}}
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon-180x180.png') }}">
 
-    <link rel="dns-prefetch" href="//fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+    @include('incidents._styles')
 
-    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 <body>
-    <div id="app">
-        <!-- Navigation Bar -->
-        <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-            <div class="container">
-                <!-- Brand Logo and Name -->
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="{{ asset('images/guardian-logo.png') }}" alt="Guardian Cloud Logo" style="height: 40px;">
-                    <span style="font-weight: bold; font-size: 1.2rem; margin-left: 10px;">Guardian Cloud</span>
-                </a>
+    <div class="wrap">
+        @include('incidents._topnav')
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#navbarContent" aria-controls="navbarContent" 
-                        aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarContent">
-                    <!-- Navigation Links -->
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('chat') }}">ChatGPT Bot</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('emergency.chat') }}">Emergency Chat</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('emergency.report') }}">Report Emergency</a>
-                        </li>
-			<li class="nav-item">
-    			<a class="nav-link" href="{{ route('video.page') }}">🎥 Video</a>
-			</li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('rooms.home') }}">Rooms</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('invite.form') }}">Send Invite</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url('/maps') }}">Maps</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('school.management') }}">School Management</a>
-                        </li>
-			<li class="nav-item">
-    				<a class="nav-link" href="{{ route('critical-care') }}">Critical Care</a>
-			</li>
-
-                    </ul>
-
-                    <!-- Right Side of Navbar -->
-                    <ul class="navbar-nav ms-auto">
-                        @guest
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                            </li>
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" 
-                                   role="button" data-bs-toggle="dropdown" aria-haspopup="true" 
-                                   aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="py-4">
-            @yield('content')
-        </main>
+        @yield('content')
     </div>
-   @stack('scripts')
+
+    @stack('scripts')
 </body>
 </html>
-
