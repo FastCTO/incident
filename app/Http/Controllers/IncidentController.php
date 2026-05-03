@@ -33,7 +33,8 @@ class IncidentController extends Controller
 
         $sortColumn = $allowedSorts[$sort];
 
-        $incidents = Incident::orderBy($sortColumn, $direction)
+        $incidents = Incident::withCount('files')
+            ->orderBy($sortColumn, $direction)
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();

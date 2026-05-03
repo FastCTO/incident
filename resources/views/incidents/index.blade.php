@@ -64,6 +64,7 @@
                         <th>{!! sort_link('Status', 'status', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Location', 'location', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Date/Time', 'datetime', $sort, $direction) !!}</th>
+                        <th>Evidence</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -84,6 +85,7 @@
                             <td>{{ ucfirst(str_replace('_', ' ', $incident->status)) }}</td>
                             <td>{{ $incident->location_name ?? '-' }}</td>
                             <td>{{ $incident->incident_datetime ? $incident->incident_datetime->format('M j, Y g:i A') : '-' }}</td>
+                            <td>{{ $incident->files_count ?? 0 }}</td>
                             <td>
                                 <a href="{{ route('incidents.show', $incident) }}">View</a>
                                 |
