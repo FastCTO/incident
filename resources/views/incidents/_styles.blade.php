@@ -277,4 +277,27 @@
             grid-template-columns: 1fr;
         }
     }
+
+/* Pagination cleanup */
+.pagination,
+nav[role="navigation"] {
+    margin-top: 20px;
+}
+
+nav[role="navigation"] svg {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+}
+
+nav[role="navigation"] a,
+nav[role="navigation"] span {
+    font-size: 14px;
+}
+
+nav[role="navigation"] .hidden {
+    display: none;
+}
+
 </style>

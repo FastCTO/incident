@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'NVR/VMS Systems - FSV Incident')
+@section('title', 'Video Sources - FSV Incident')
 
 @section('content')
     <div class="card">
         <div class="header-row">
             <div>
-                <h1>NVR/VMS Systems</h1>
-                <p>Document video systems connected to customer sites for evidence integrity and future baseline checks.</p>
+                <h1>Video Sources</h1>
+                <p>Document cameras, NVRs, DVRs, VMS platforms, and cloud video systems used as trusted evidence sources.</p>
             </div>
 
             <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
@@ -21,11 +21,11 @@
     <div class="card">
         <div class="header-row" style="margin-bottom: 20px;">
             <div>
-                <h2>Video Systems</h2>
-                <p style="margin-top: -8px;">Track NVRs, DVRs, VMS platforms, and cloud video systems by site.</p>
+                <h2>Video Sources</h2>
+                <p style="margin-top: -8px;">Track individual cameras, recorders, and video platforms by site.</p>
             </div>
 
-            <a href="{{ route('nvr-systems.create') }}" class="btn">Add NVR/VMS</a>
+            <a href="{{ route('nvr-systems.create') }}" class="btn">Add Video Source</a>
         </div>
 
         @if($nvrSystems->count())
@@ -54,7 +54,7 @@
                             </td>
                             <td>{{ $nvrSystem->site->name ?? '-' }}</td>
                             <td>{{ $nvrSystem->system_type ? ucwords(str_replace('_', ' ', $nvrSystem->system_type)) : '-' }}</td>
-                            <td>{{ ucfirst($nvrSystem->status) }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $nvrSystem->status)) }}</td>
                             <td>{{ $nvrSystem->system_label }}</td>
                             <td>
                                 {{ $nvrSystem->ip_address ?? '-' }}
@@ -68,7 +68,7 @@
                             <td>
                                 <a href="{{ route('nvr-systems.edit', $nvrSystem) }}">Edit</a>
                                 |
-                                <form method="POST" action="{{ route('nvr-systems.destroy', $nvrSystem) }}" style="display: inline;" onsubmit="return confirm('Delete this NVR/VMS profile?');">
+                                <form method="POST" action="{{ route('nvr-systems.destroy', $nvrSystem) }}" style="display: inline;" onsubmit="return confirm('Delete this video source profile?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="nav-button-link">Delete</button>
@@ -84,9 +84,9 @@
             </div>
         @else
             <div class="empty">
-                <h3>No NVR/VMS systems yet</h3>
-                <p>Add the first video system for this account.</p>
-                <a href="{{ route('nvr-systems.create') }}" class="btn">Add NVR/VMS</a>
+                <h3>No video sources yet</h3>
+                <p>Add the first camera, NVR, DVR, VMS, or cloud video source for this account.</p>
+                <a href="{{ route('nvr-systems.create') }}" class="btn">Add Video Source</a>
             </div>
         @endif
     </div>

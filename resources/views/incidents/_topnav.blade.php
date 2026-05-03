@@ -14,7 +14,7 @@
         <a href="{{ route('sites.index') }}">Sites</a>
 
         @if(\Illuminate\Support\Facades\Route::has('nvr-systems.index'))
-            <a href="{{ route('nvr-systems.index') }}">NVR/VMS</a>
+            <a href="{{ route('nvr-systems.index') }}">Video Sources</a>
         @endif
 
         <a href="{{ route('organizations.index') }}">Organizations</a>

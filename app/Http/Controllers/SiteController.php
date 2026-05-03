@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organization;
 use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,30 +11,34 @@ class SiteController extends Controller
 {
     public function index()
     {
-        $organization = Auth::user()->organization;
+        $organizationIds = $this->visibleOrganizationIds();
 
-        $sites = Site::where('organization_id', $organization?->id)
+        $sites = Site::with('organization')
+            ->whereIn('organization_id', $organizationIds)
             ->orderBy('name')
             ->paginate(20);
+
+        $organization = $this->currentOrganization();
 
         return view('sites.index', compact('sites', 'organization'));
     }
 
     public function create()
     {
-        return view('sites.create');
+        $organizations = $this->availableOrganizationsForSiteAssignment();
+
+        return view('sites.create', compact('organizations'));
     }
 
     public function store(Request $request)
     {
-        $organization = Auth::user()->organization;
+        $validated = $this->validateSite($request);
 
-        if (!$organization) {
-            abort(403, 'No organization assigned.');
+        if (empty($validated['organization_id'])) {
+            $validated['organization_id'] = $this->currentOrganization()?->id;
         }
 
-        $validated = $this->validateSite($request);
-        $validated['organization_id'] = $organization->id;
+        $this->authorizeOrganizationForSite((int) $validated['organization_id']);
 
         $site = Site::create($validated);
 
@@ -46,7 +51,9 @@ class SiteController extends Controller
     {
         $this->authorizeSiteAccess($site);
 
-        return view('sites.edit', compact('site'));
+        $organizations = $this->availableOrganizationsForSiteAssignment();
+
+        return view('sites.edit', compact('site', 'organizations'));
     }
 
     public function update(Request $request, Site $site)
@@ -54,6 +61,12 @@ class SiteController extends Controller
         $this->authorizeSiteAccess($site);
 
         $validated = $this->validateSite($request);
+
+        if (empty($validated['organization_id'])) {
+            $validated['organization_id'] = $site->organization_id;
+        }
+
+        $this->authorizeOrganizationForSite((int) $validated['organization_id']);
 
         $site->update($validated);
 
@@ -72,6 +85,12 @@ class SiteController extends Controller
                 ->with('success', 'Site has incidents and cannot be deleted. Rename or mark inactive instead.');
         }
 
+        if (method_exists($site, 'nvrSystems') && $site->nvrSystems()->count() > 0) {
+            return redirect()
+                ->route('sites.index')
+                ->with('success', 'Site has video sources and cannot be deleted. Rename or mark inactive instead.');
+        }
+
         $site->delete();
 
         return redirect()
@@ -82,6 +101,7 @@ class SiteController extends Controller
     private function validateSite(Request $request): array
     {
         return $request->validate([
+            'organization_id' => ['nullable', 'integer', 'exists:organizations,id'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'string', 'max:100'],
@@ -98,15 +118,70 @@ class SiteController extends Controller
         ]);
     }
 
-    private function authorizeSiteAccess(Site $site): void
+    private function currentOrganization(): ?Organization
     {
-        $user = Auth::user();
+        $organizationId = Auth::user()?->organization_id;
 
-        if (!$user || !$user->organization_id) {
-            abort(403, 'No organization assigned.');
+        if (!$organizationId) {
+            return null;
         }
 
-        if ((int) $site->organization_id !== (int) $user->organization_id) {
+        return Organization::find($organizationId);
+    }
+
+    private function currentUserIsPlatformOwner(): bool
+    {
+        return $this->currentOrganization()?->organization_type === 'platform_owner';
+    }
+
+    private function currentUserIsChannelPartner(): bool
+    {
+        return $this->currentOrganization()?->organization_type === 'channel_partner';
+    }
+
+    private function visibleOrganizationIds(): array
+    {
+        $organization = $this->currentOrganization();
+
+        if (!$organization) {
+            return [];
+        }
+
+        if ($this->currentUserIsPlatformOwner()) {
+            return Organization::pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        if ($this->currentUserIsChannelPartner()) {
+            return Organization::where('id', $organization->id)
+                ->orWhere('parent_organization_id', $organization->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        return [(int) $organization->id];
+    }
+
+    private function availableOrganizationsForSiteAssignment()
+    {
+        return Organization::whereIn('id', $this->visibleOrganizationIds())
+            ->orderByRaw("FIELD(organization_type, 'platform_owner', 'channel_partner', 'customer', 'site_account')")
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function authorizeOrganizationForSite(int $organizationId): void
+    {
+        if (!in_array($organizationId, $this->visibleOrganizationIds(), true)) {
+            abort(403, 'You do not have access to create or edit sites for this organization.');
+        }
+    }
+
+    private function authorizeSiteAccess(Site $site): void
+    {
+        if (!in_array((int) $site->organization_id, $this->visibleOrganizationIds(), true)) {
             abort(403, 'You do not have access to this site.');
         }
     }

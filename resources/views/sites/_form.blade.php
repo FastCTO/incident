@@ -1,7 +1,22 @@
 @php
     $site = $site ?? null;
+    $selectedOrganizationId = old('organization_id', $site->organization_id ?? '');
     $selectedStatus = old('status', $site->status ?? 'active');
 @endphp
+
+<div class="field">
+    <label for="organization_id">Organization / Account</label>
+    <select name="organization_id" id="organization_id" required>
+        <option value="">Select organization</option>
+
+        @foreach($organizations as $organization)
+            <option value="{{ $organization->id }}" {{ (string) $selectedOrganizationId === (string) $organization->id ? 'selected' : '' }}>
+                {{ $organization->name }} ({{ ucwords(str_replace('_', ' ', $organization->organization_type)) }})
+            </option>
+        @endforeach
+    </select>
+    @error('organization_id') <div class="error">{{ $message }}</div> @enderror
+</div>
 
 <div class="field">
     <label for="name">Site Name</label>

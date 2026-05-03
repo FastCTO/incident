@@ -7,7 +7,7 @@
         <div class="header-row">
             <div>
                 <h1>Organization Profile</h1>
-                <p>Manage the account information used to group users, incidents, evidence, and future NVR/VMS records.</p>
+                <p>Manage the account information used to group users, incidents, evidence, and future video source records.</p>
             </div>
 
             <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Edit NVR/VMS - FSV Incident')
+@section('title', 'Edit Video Source - FSV Incident')
 
 @section('content')
     <div class="card">
         <div class="header-row">
             <div>
-                <h1>Edit NVR/VMS</h1>
+                <h1>Edit Video Source</h1>
                 <p>{{ $nvrSystem->name }}</p>
             </div>
 
@@ -19,7 +19,7 @@
     @endif
 
     <div class="card">
-        <h2>System Details</h2>
+        <h2>Video Source Details</h2>
 
         <form method="POST" action="{{ route('nvr-systems.update', $nvrSystem) }}">
             @csrf
@@ -27,17 +27,17 @@
 
             @include('nvr-systems._form', ['nvrSystem' => $nvrSystem, 'sites' => $sites])
 
-            <button type="submit" class="btn">Update NVR/VMS</button>
-            <a href="{{ route('nvr-systems.index') }}" class="btn btn-secondary">Back to NVR/VMS</a>
+            <button type="submit" class="btn">Update Video Source</button>
+            <a href="{{ route('nvr-systems.index') }}" class="btn btn-secondary">Back to Video Sources</a>
         </form>
     </div>
 
     <div class="card">
-        <h2>System Summary</h2>
+        <h2>Source Trust Summary</h2>
 
         <div class="details">
             <div>
-                <div class="label">NVR/VMS ID</div>
+                <div class="label">Video Source ID</div>
                 <div class="value">{{ $nvrSystem->id }}</div>
             </div>
 
@@ -52,7 +52,7 @@
             </div>
 
             <div>
-                <div class="label">System</div>
+                <div class="label">Source</div>
                 <div class="value">{{ $nvrSystem->system_label }}</div>
             </div>
 

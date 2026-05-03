@@ -38,7 +38,7 @@
         name="name"
         id="name"
         value="{{ old('name', $nvrSystem->name ?? '') }}"
-        placeholder="Example: Main Office Eagle Eye VMS"
+        placeholder="Example: Main Office Eagle Eye VMS or Highway Camera 12"
         required
     >
     @error('name') <div class="error">{{ $message }}</div> @enderror
@@ -49,6 +49,7 @@
         <label for="system_type">System Type</label>
         <select name="system_type" id="system_type">
             <option value="">Select type</option>
+            <option value="camera" {{ $selectedSystemType === 'camera' ? 'selected' : '' }}>Camera</option>
             <option value="nvr" {{ $selectedSystemType === 'nvr' ? 'selected' : '' }}>NVR</option>
             <option value="dvr" {{ $selectedSystemType === 'dvr' ? 'selected' : '' }}>DVR</option>
             <option value="vms" {{ $selectedSystemType === 'vms' ? 'selected' : '' }}>VMS</option>
@@ -61,7 +62,7 @@
 
     <div class="field">
         <label for="manufacturer">Manufacturer</label>
-        <input type="text" name="manufacturer" id="manufacturer" value="{{ old('manufacturer', $nvrSystem->manufacturer ?? '') }}" placeholder="Example: Eagle Eye, Hikvision, Hanwha">
+        <input type="text" name="manufacturer" id="manufacturer" value="{{ old('manufacturer', $nvrSystem->manufacturer ?? '') }}" placeholder="Example: Eagle Eye, Hikvision, Hanwha, Axis">
         @error('manufacturer') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -102,8 +103,8 @@
     </div>
 
     <div class="field">
-        <label for="remote_url">Remote URL</label>
-        <input type="text" name="remote_url" id="remote_url" value="{{ old('remote_url', $nvrSystem->remote_url ?? '') }}" placeholder="Example: https://vms.example.com">
+        <label for="remote_url">Remote URL / Stream URL</label>
+        <input type="text" name="remote_url" id="remote_url" value="{{ old('remote_url', $nvrSystem->remote_url ?? '') }}" placeholder="Example: https://vms.example.com or stream URL">
         @error('remote_url') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -135,13 +136,13 @@
 
 <div class="field">
     <label for="storage_notes">Storage / Retention Notes</label>
-    <textarea name="storage_notes" id="storage_notes" placeholder="Example: 8TB RAID, oldest visible recording approximately 28 days">{{ old('storage_notes', $nvrSystem->storage_notes ?? '') }}</textarea>
+    <textarea name="storage_notes" id="storage_notes" placeholder="Example: 8TB RAID, oldest visible recording approximately 28 days, or live stream only">{{ old('storage_notes', $nvrSystem->storage_notes ?? '') }}</textarea>
     @error('storage_notes') <div class="error">{{ $message }}</div> @enderror
 </div>
 
 <div class="field">
     <label for="access_notes">Access Notes</label>
-    <textarea name="access_notes" id="access_notes" placeholder="Example: Customer admin account available; export tested manually">{{ old('access_notes', $nvrSystem->access_notes ?? '') }}</textarea>
+    <textarea name="access_notes" id="access_notes" placeholder="Example: Customer admin account available; export tested manually; public stream URL verified">{{ old('access_notes', $nvrSystem->access_notes ?? '') }}</textarea>
     @error('access_notes') <div class="error">{{ $message }}</div> @enderror
 </div>
 

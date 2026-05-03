@@ -7,7 +7,7 @@
         <div class="header-row">
             <div>
                 <h1>Sites</h1>
-                <p>Manage physical locations for this account. Incidents, NVRs, cameras, and evidence will attach to sites.</p>
+                <p>Manage physical locations for this account. Incidents, video sources, cameras, and evidence will attach to sites.</p>
             </div>
 
             <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
@@ -37,6 +37,7 @@
                         <th>Status</th>
                         <th>Contact</th>
                         <th>Address</th>
+                        <th>Video Sources</th>
                         <th>Incidents</th>
                         <th>Actions</th>
                     </tr>
@@ -47,20 +48,28 @@
                             <td>
                                 <a href="{{ route('sites.edit', $site) }}">{{ $site->name }}</a>
                             </td>
+
                             <td>{{ $site->site_type ? ucwords(str_replace('_', ' ', $site->site_type)) : '-' }}</td>
+
                             <td>{{ ucfirst($site->status) }}</td>
+
                             <td>
                                 {{ $site->contact_name ?? '-' }}
                                 @if($site->contact_email)
                                     <div style="font-size: 13px; color: #4b5563;">{{ $site->contact_email }}</div>
                                 @endif
                             </td>
+
                             <td>{{ $site->full_address }}</td>
+
+                            <td>{{ $site->nvrSystems()->count() }}</td>
+
                             <td>{{ $site->incidents()->count() }}</td>
+
                             <td>
                                 <a href="{{ route('sites.edit', $site) }}">Edit</a>
 
-                                @if($site->incidents()->count() === 0)
+                                @if($site->incidents()->count() === 0 && $site->nvrSystems()->count() === 0)
                                     |
                                     <form method="POST" action="{{ route('sites.destroy', $site) }}" style="display: inline;" onsubmit="return confirm('Delete this site?');">
                                         @csrf

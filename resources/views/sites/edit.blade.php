@@ -25,11 +25,14 @@
             @csrf
             @method('PUT')
 
-            @include('sites._form', ['site' => $site])
+            @include('sites._form', ['site' => $site, 'organizations' => $organizations])
 
             <button type="submit" class="btn">Update Site</button>
             <a href="{{ route('sites.index') }}" class="btn btn-secondary">Back to Sites</a>
-            <a href="{{ route('nvr-systems.create') }}" class="btn btn-secondary">Add NVR/VMS</a>
+
+            @if(\Illuminate\Support\Facades\Route::has('nvr-systems.create'))
+                <a href="{{ route('nvr-systems.create') }}" class="btn btn-secondary">Add Video Source</a>
+            @endif
         </form>
     </div>
 
@@ -53,8 +56,8 @@
             </div>
 
             <div>
-                <div class="label">NVR/VMS Systems</div>
-                <div class="value">{{ $site->nvrSystems()->count() }}</div>
+                <div class="label">Video Sources</div>
+                <div class="value">{{ method_exists($site, 'nvrSystems') ? $site->nvrSystems()->count() : 0 }}</div>
             </div>
 
             <div>

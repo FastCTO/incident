@@ -41,7 +41,7 @@ class NvrSystemController extends Controller
 
         return redirect()
             ->route('nvr-systems.edit', $nvrSystem)
-            ->with('success', 'NVR/VMS profile created successfully.');
+            ->with('success', 'Video source profile created successfully.');
     }
 
     public function edit(NvrSystem $nvrSystem)
@@ -69,7 +69,7 @@ class NvrSystemController extends Controller
 
         return redirect()
             ->route('nvr-systems.edit', $nvrSystem)
-            ->with('success', 'NVR/VMS profile updated successfully.');
+            ->with('success', 'Video source profile updated successfully.');
     }
 
     public function destroy(NvrSystem $nvrSystem)
@@ -80,7 +80,7 @@ class NvrSystemController extends Controller
 
         return redirect()
             ->route('nvr-systems.index')
-            ->with('success', 'NVR/VMS profile deleted successfully.');
+            ->with('success', 'Video source profile deleted successfully.');
     }
 
     private function validateNvrSystem(Request $request): array
@@ -176,7 +176,7 @@ class NvrSystemController extends Controller
     private function authorizeNvrAccess(NvrSystem $nvrSystem): void
     {
         if (!in_array((int) $nvrSystem->organization_id, $this->visibleOrganizationIds(), true)) {
-            abort(403, 'You do not have access to this NVR/VMS profile.');
+            abort(403, 'You do not have access to this video source profile.');
         }
     }
 }

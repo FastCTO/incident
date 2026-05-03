@@ -10,10 +10,8 @@ class OrganizationManagementController extends Controller
 {
     public function index()
     {
-        $visibleOrganizationIds = $this->visibleOrganizationIds();
-
         $organizations = Organization::with(['parentOrganization', 'childOrganizations'])
-            ->whereIn('id', $visibleOrganizationIds)
+            ->whereIn('id', $this->visibleOrganizationIds())
             ->orderByRaw("FIELD(organization_type, 'platform_owner', 'channel_partner', 'customer', 'site_account')")
             ->orderBy('name')
             ->paginate(25);
@@ -129,7 +127,13 @@ class OrganizationManagementController extends Controller
 
     private function currentOrganization(): ?Organization
     {
-        return Auth::user()?->organization;
+        $organizationId = Auth::user()?->organization_id;
+
+        if (!$organizationId) {
+            return null;
+        }
+
+        return Organization::find($organizationId);
     }
 
     private function currentUserIsPlatformOwner(): bool
@@ -151,17 +155,18 @@ class OrganizationManagementController extends Controller
         }
 
         if ($this->currentUserIsPlatformOwner()) {
-            return Organization::pluck('id')->toArray();
+            return Organization::pluck('id')->map(fn ($id) => (int) $id)->toArray();
         }
 
         if ($this->currentUserIsChannelPartner()) {
             return Organization::where('id', $organization->id)
                 ->orWhere('parent_organization_id', $organization->id)
                 ->pluck('id')
+                ->map(fn ($id) => (int) $id)
                 ->toArray();
         }
 
-        return [$organization->id];
+        return [(int) $organization->id];
     }
 
     private function availableParentOrganizations()
@@ -190,13 +195,23 @@ class OrganizationManagementController extends Controller
 
     private function authorizeOrganizationAccess(Organization $organization): void
     {
-        if (!in_array((int) $organization->id, array_map('intval', $this->visibleOrganizationIds()), true)) {
+        if ($this->currentUserIsPlatformOwner()) {
+            return;
+        }
+
+        $visibleIds = $this->visibleOrganizationIds();
+
+        if (!in_array((int) $organization->id, $visibleIds, true)) {
             abort(403, 'You do not have access to this organization.');
         }
     }
 
     private function authorizeParentOrganization(int $parentOrganizationId): void
     {
+        if ($this->currentUserIsPlatformOwner()) {
+            return;
+        }
+
         $allowedParentIds = $this->availableParentOrganizations()
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
