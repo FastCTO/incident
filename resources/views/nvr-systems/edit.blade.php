@@ -105,6 +105,8 @@
                         <th>Retention</th>
                         <th>Cameras</th>
                         <th>Next Due</th>
+                        <th>Attachments</th>
+                        <th>Addendums</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -113,7 +115,15 @@
                         <tr>
                             <td>{{ $audit->performed_at ? $audit->performed_at->format('M j, Y g:i A') : '-' }}</td>
                             <td>{{ $audit->audit_type_label }}</td>
-                            <td>{{ $audit->audit_status_label }}</td>
+                            <td>
+                                {{ $audit->audit_status_label }}
+
+                                @if($audit->isDraft())
+                                    <div style="font-size: 13px; color: #4b5563;">Not finalized</div>
+                                @else
+                                    <div style="font-size: 13px; color: #4b5563;">Locked</div>
+                                @endif
+                            </td>
                             <td>{{ $audit->performer_display_name }}</td>
                             <td>{{ $audit->ip_address ?? '-' }}</td>
                             <td>{{ $audit->estimated_retention_days ? $audit->estimated_retention_days . ' days' : '-' }}</td>
@@ -125,7 +135,11 @@
                             </td>
                             <td>{{ $audit->next_audit_due_at ? $audit->next_audit_due_at->format('M j, Y') : '-' }}</td>
                             <td>
-                                <a href="{{ route('video-source-audits.edit', $audit) }}">View</a>
+                                @if($audit->isDraft())
+                                    <a href="{{ route('video-source-audits.edit', $audit) }}">Continue Draft</a>
+                                @else
+                                    <a href="{{ route('video-source-audits.edit', $audit) }}">View Locked Audit</a>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

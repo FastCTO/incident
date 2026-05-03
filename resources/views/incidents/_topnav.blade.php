@@ -1,37 +1,71 @@
 <div class="top-nav">
     <div class="top-nav-left">
-        <strong>FSV Incident</strong>
+        <strong class="brand">FSV Incident</strong>
 
-        <a href="{{ route('incidents.index') }}">Incidents</a>
+        <a href="{{ route('dashboard') }}">Dashboard</a>
 
-        <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
-            @csrf
-            <button type="submit" class="nav-button-link">Start New Incident</button>
-        </form>
+        <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-button">Incidents</button>
 
-        <a href="{{ route('incidents.index', ['archived' => 1]) }}">Archived</a>
+            <div class="nav-dropdown-menu">
+                <a href="{{ route('incidents.index') }}">Incident List</a>
 
-        <a href="{{ route('sites.index') }}">Sites</a>
+                <form method="POST" action="{{ route('incidents.start') }}">
+                    @csrf
+                    <button type="submit" class="nav-dropdown-form-button">Start Incident</button>
+                </form>
+
+                <a href="{{ route('incidents.index', ['archived' => 1]) }}">Archived Incidents</a>
+            </div>
+        </div>
+
+        <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-button">Sites</button>
+
+            <div class="nav-dropdown-menu">
+                <a href="{{ route('sites.index') }}">Site List</a>
+                <a href="{{ route('sites.create') }}">Add Site</a>
+            </div>
+        </div>
 
         @if(\Illuminate\Support\Facades\Route::has('nvr-systems.index'))
-            <a href="{{ route('nvr-systems.index') }}">Video Sources</a>
+            <div class="nav-dropdown">
+                <button type="button" class="nav-dropdown-button">Video Sources</button>
+
+                <div class="nav-dropdown-menu">
+                    <a href="{{ route('nvr-systems.index') }}">Video Source List</a>
+                    <a href="{{ route('nvr-systems.create') }}">Add Video Source</a>
+                </div>
+            </div>
         @endif
 
-        <a href="{{ route('organizations.index') }}">Organizations</a>
+        <div class="nav-dropdown">
+            <button type="button" class="nav-dropdown-button">Organizations</button>
 
-        <a href="{{ route('organization.edit') }}">My Organization</a>
-
-        <a href="{{ route('profile.edit') }}">My Profile</a>
+            <div class="nav-dropdown-menu">
+                <a href="{{ route('organizations.index') }}">Organization List</a>
+                <a href="{{ route('organizations.create') }}">Add Organization</a>
+                <a href="{{ route('organization.edit') }}">My Organization</a>
+            </div>
+        </div>
     </div>
 
     <div class="top-nav-right">
         @auth
-            <span>{{ Auth::user()->display_name ?? Auth::user()->name ?? Auth::user()->email }}</span>
+            <div class="nav-dropdown nav-dropdown-right">
+                <button type="button" class="nav-dropdown-button">
+                    {{ Auth::user()->display_name ?? Auth::user()->name ?? Auth::user()->email }}
+                </button>
 
-            <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
-                @csrf
-                <button type="submit" class="logout-button">Logout</button>
-            </form>
+                <div class="nav-dropdown-menu">
+                    <a href="{{ route('profile.edit') }}">My Profile</a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="nav-dropdown-form-button">Logout</button>
+                    </form>
+                </div>
+            </div>
         @endauth
     </div>
 </div>
