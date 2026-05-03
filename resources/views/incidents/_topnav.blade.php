@@ -9,12 +9,16 @@
             <button type="submit" class="nav-button-link">Start New Incident</button>
         </form>
 
-        <a href="{{ route('dashboard') }}">Dashboard</a>
+        <a href="{{ route('incidents.index', ['archived' => 1]) }}">Archived</a>
+
+        <a href="{{ route('organization.edit') }}">Organization</a>
+
+        <a href="{{ route('profile.edit') }}">My Profile</a>
     </div>
 
     <div class="top-nav-right">
         @auth
-            <span>{{ Auth::user()->name ?? Auth::user()->email }}</span>
+            <span>{{ Auth::user()->display_name ?? Auth::user()->name ?? Auth::user()->email }}</span>
 
             <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
                 @csrf
