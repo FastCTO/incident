@@ -76,6 +76,9 @@ class VideoSourceAudit extends Model
         'overall_notes',
         'recommended_actions',
         'next_audit_due_at',
+
+        'locked_at',
+        'locked_by',
     ];
 
     protected $casts = [
@@ -88,6 +91,7 @@ class VideoSourceAudit extends Model
         'export_test_performed' => 'boolean',
         'logs_reviewed' => 'boolean',
         'next_audit_due_at' => 'datetime',
+        'locked_at' => 'datetime',
         'estimated_retention_days' => 'integer',
         'total_camera_count' => 'integer',
         'active_camera_count' => 'integer',
@@ -123,6 +127,31 @@ class VideoSourceAudit extends Model
         return $this->belongsTo(User::class, 'performed_by');
     }
 
+    public function lockedBy()
+    {
+        return $this->belongsTo(User::class, 'locked_by');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(VideoSourceAuditAttachment::class, 'video_source_audit_id')->latest();
+    }
+
+    public function addendums()
+    {
+        return $this->hasMany(VideoSourceAuditAddendum::class, 'video_source_audit_id')->latest();
+    }
+
+    public function isLocked(): bool
+    {
+        return !is_null($this->locked_at);
+    }
+
+    public function isDraft(): bool
+    {
+        return is_null($this->locked_at);
+    }
+
     public function getAuditTypeLabelAttribute(): string
     {
         return ucwords(str_replace('_', ' ', $this->audit_type ?? 'audit'));
@@ -130,6 +159,10 @@ class VideoSourceAudit extends Model
 
     public function getAuditStatusLabelAttribute(): string
     {
+        if ($this->isDraft()) {
+            return 'Draft';
+        }
+
         return ucwords(str_replace('_', ' ', $this->audit_status ?? 'unknown'));
     }
 
@@ -143,6 +176,18 @@ class VideoSourceAudit extends Model
             ?? $this->performer->name
             ?? $this->performer->email
             ?? 'User #' . $this->performed_by;
+    }
+
+    public function getLockedByDisplayNameAttribute(): string
+    {
+        if (!$this->lockedBy) {
+            return '-';
+        }
+
+        return $this->lockedBy->display_name
+            ?? $this->lockedBy->name
+            ?? $this->lockedBy->email
+            ?? 'User #' . $this->locked_by;
     }
 
     public function getNtpEnabledLabelAttribute(): string

@@ -10,7 +10,11 @@
                 <p>{{ $nvrSystem->name }}</p>
             </div>
 
-            <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="{{ route('nvr-systems.index') }}" class="btn btn-secondary">Back to Video Sources</a>
+                <a href="{{ route('video-source-audits.create', $nvrSystem) }}" class="btn">Start New Audit</a>
+                <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
+            </div>
         </div>
     </div>
 
@@ -28,8 +32,6 @@
             @include('nvr-systems._form', ['nvrSystem' => $nvrSystem, 'sites' => $sites])
 
             <button type="submit" class="btn">Update Video Source</button>
-            <a href="{{ route('nvr-systems.index') }}" class="btn btn-secondary">Back to Video Sources</a>
-            <a href="{{ route('video-source-audits.create', $nvrSystem) }}" class="btn btn-secondary">Start New Audit</a>
         </form>
     </div>
 

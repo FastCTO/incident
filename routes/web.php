@@ -14,6 +14,8 @@ use App\Http\Controllers\OrganizationManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\VideoSourceAuditController;
+use App\Http\Controllers\VideoSourceAuditAttachmentController;
+use App\Http\Controllers\VideoSourceAuditAddendumController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,8 +71,20 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/video-source-audits/{audit}', [VideoSourceAuditController::class, 'update'])
         ->name('video-source-audits.update');
 
+    Route::post('/video-source-audits/{audit}/finalize', [VideoSourceAuditController::class, 'finalize'])
+        ->name('video-source-audits.finalize');
+
+
     Route::delete('/video-source-audits/{audit}', [VideoSourceAuditController::class, 'destroy'])
         ->name('video-source-audits.destroy');
+
+    Route::post('/video-source-audits/{audit}/attachments', [VideoSourceAuditAttachmentController::class, 'store'])
+        ->name('video-source-audits.attachments.store');
+
+    Route::post('/video-source-audits/{audit}/addendums', [VideoSourceAuditAddendumController::class, 'store'])
+        ->name('video-source-audits.addendums.store');
+
+
 
 
     Route::post('/incidents/start', [IncidentController::class, 'start'])
