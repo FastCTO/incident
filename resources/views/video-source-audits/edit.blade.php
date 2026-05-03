@@ -14,6 +14,8 @@
                 <a href="{{ route('nvr-systems.edit', $audit->videoSource) }}" class="btn btn-secondary">Back to Video Source</a>
 
                 @if($audit->isDraft())
+                    <button type="submit" form="audit-checklist-form" class="btn btn-secondary">Save Draft Audit</button>
+
                     <form method="POST" action="{{ route('video-source-audits.finalize', $audit) }}" style="margin: 0;" onsubmit="return confirm('Finalize and lock this audit? The checklist fields cannot be edited after finalization.');">
                         @csrf
                         <button type="submit" class="btn">Finalize Audit</button>
@@ -35,20 +37,21 @@
             Fill out the checklist, upload logs/clips/screenshots, then finalize the audit to lock the trust-chain record.
         </div>
 
-        <form method="POST" action="{{ route('video-source-audits.update', $audit) }}">
+        <form id="audit-checklist-form" method="POST" action="{{ route('video-source-audits.update', $audit) }}">
             @csrf
             @method('PUT')
-
-            @include('video-source-audits._form', [
-                'audit' => $audit,
-                'nvrSystem' => $audit->videoSource,
-            ])
-
-            <div class="card">
-                <button type="submit" class="btn">Save Draft Audit</button>
-                <a href="{{ route('nvr-systems.edit', $audit->videoSource) }}" class="btn btn-secondary">Back to Video Source</a>
-            </div>
         </form>
+
+        @include('video-source-audits._form', [
+            'audit' => $audit,
+            'nvrSystem' => $audit->videoSource,
+            'auditFormId' => 'audit-checklist-form',
+        ])
+
+        <div class="card">
+            <button type="submit" form="audit-checklist-form" class="btn">Save Draft Audit</button>
+            <a href="{{ route('nvr-systems.edit', $audit->videoSource) }}" class="btn btn-secondary">Back to Video Source</a>
+        </div>
     @else
         <div class="notice" style="margin-bottom: 20px;">
             <strong>Append-only record:</strong>
@@ -140,6 +143,7 @@
         </div>
     @endif
 
+    @if($audit->isLocked())
     <div class="card">
         <h2>Storage / Retention</h2>
 
@@ -250,6 +254,8 @@
             <button type="submit" class="btn">Upload Log</button>
         </form>
     </div>
+
+    @endif
 
     <div class="card">
         <h2>Audit Attachments</h2>

@@ -3,6 +3,7 @@
     $selectedAuditType = old('audit_type', $audit->audit_type ?? 'initial_baseline');
     $selectedAuditStatus = old('audit_status', $audit->audit_status ?? 'pass');
     $source = $nvrSystem ?? $audit->videoSource ?? null;
+    $auditFormId = $auditFormId ?? 'audit-checklist-form';
 
     $selectedTimeZone = old('system_time_zone', $audit->system_time_zone ?? $source->site->time_zone ?? 'America/Chicago');
 
@@ -47,7 +48,7 @@
     <div class="grid">
         <div class="field">
             <label for="audit_type">Audit Type</label>
-            <select name="audit_type" id="audit_type" required>
+            <select form="{{ $auditFormId }}" name="audit_type" id="audit_type" required>
                 <option value="initial_baseline" {{ $selectedAuditType === 'initial_baseline' ? 'selected' : '' }}>Initial Baseline</option>
                 <option value="quarterly" {{ $selectedAuditType === 'quarterly' ? 'selected' : '' }}>Quarterly</option>
                 <option value="incident_driven" {{ $selectedAuditType === 'incident_driven' ? 'selected' : '' }}>Incident-Driven</option>
@@ -59,7 +60,7 @@
 
         <div class="field">
             <label for="audit_status">Audit Status</label>
-            <select name="audit_status" id="audit_status" required>
+            <select form="{{ $auditFormId }}" name="audit_status" id="audit_status" required>
                 <option value="pass" {{ $selectedAuditStatus === 'pass' ? 'selected' : '' }}>Pass</option>
                 <option value="warning" {{ $selectedAuditStatus === 'warning' ? 'selected' : '' }}>Warning</option>
                 <option value="fail" {{ $selectedAuditStatus === 'fail' ? 'selected' : '' }}>Fail</option>
@@ -71,7 +72,7 @@
 
     <div class="field">
         <label for="performed_at">Performed At</label>
-        <input
+        <input form="{{ $auditFormId }}"
             type="datetime-local"
             name="performed_at"
             id="performed_at"
@@ -87,13 +88,13 @@
     <div class="grid">
         <div class="field">
             <label for="manufacturer_observed">Manufacturer Observed</label>
-            <input type="text" name="manufacturer_observed" id="manufacturer_observed" value="{{ old('manufacturer_observed', $audit->manufacturer_observed ?? $source->manufacturer ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="manufacturer_observed" id="manufacturer_observed" value="{{ old('manufacturer_observed', $audit->manufacturer_observed ?? $source->manufacturer ?? '') }}">
             @error('manufacturer_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="model_observed">Model Observed</label>
-            <input type="text" name="model_observed" id="model_observed" value="{{ old('model_observed', $audit->model_observed ?? $source->model ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="model_observed" id="model_observed" value="{{ old('model_observed', $audit->model_observed ?? $source->model ?? '') }}">
             @error('model_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
@@ -101,13 +102,13 @@
     <div class="grid">
         <div class="field">
             <label for="serial_number_observed">Serial Number Observed</label>
-            <input type="text" name="serial_number_observed" id="serial_number_observed" value="{{ old('serial_number_observed', $audit->serial_number_observed ?? $source->serial_number ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="serial_number_observed" id="serial_number_observed" value="{{ old('serial_number_observed', $audit->serial_number_observed ?? $source->serial_number ?? '') }}">
             @error('serial_number_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="installation_date">Installation Date, if known</label>
-            <input
+            <input form="{{ $auditFormId }}"
                 type="date"
                 name="installation_date"
                 id="installation_date"
@@ -120,13 +121,13 @@
     <div class="grid">
         <div class="field">
             <label for="firmware_version">Firmware Version</label>
-            <input type="text" name="firmware_version" id="firmware_version" value="{{ old('firmware_version', $audit->firmware_version ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="firmware_version" id="firmware_version" value="{{ old('firmware_version', $audit->firmware_version ?? '') }}">
             @error('firmware_version') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="software_version">Software Version</label>
-            <input type="text" name="software_version" id="software_version" value="{{ old('software_version', $audit->software_version ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="software_version" id="software_version" value="{{ old('software_version', $audit->software_version ?? '') }}">
             @error('software_version') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
@@ -134,13 +135,13 @@
     <div class="grid">
         <div class="field">
             <label for="os_version">OS / Platform Version</label>
-            <input type="text" name="os_version" id="os_version" value="{{ old('os_version', $audit->os_version ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="os_version" id="os_version" value="{{ old('os_version', $audit->os_version ?? '') }}">
             @error('os_version') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="mac_address_observed">MAC Address Observed</label>
-            <input type="text" name="mac_address_observed" id="mac_address_observed" value="{{ old('mac_address_observed', $audit->mac_address_observed ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="mac_address_observed" id="mac_address_observed" value="{{ old('mac_address_observed', $audit->mac_address_observed ?? '') }}">
             @error('mac_address_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
@@ -148,13 +149,13 @@
     <div class="grid">
         <div class="field">
             <label for="hostname_observed">Hostname Observed</label>
-            <input type="text" name="hostname_observed" id="hostname_observed" value="{{ old('hostname_observed', $audit->hostname_observed ?? $source->hostname ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="hostname_observed" id="hostname_observed" value="{{ old('hostname_observed', $audit->hostname_observed ?? $source->hostname ?? '') }}">
             @error('hostname_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="source_ip_observed">Source IP Observed</label>
-            <input type="text" name="source_ip_observed" id="source_ip_observed" value="{{ old('source_ip_observed', $audit->source_ip_observed ?? $source->ip_address ?? '') }}">
+            <input form="{{ $auditFormId }}" type="text" name="source_ip_observed" id="source_ip_observed" value="{{ old('source_ip_observed', $audit->source_ip_observed ?? $source->ip_address ?? '') }}">
             @error('source_ip_observed') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
@@ -166,7 +167,7 @@
     <div class="grid">
         <div class="field">
             <label for="system_datetime">System Date/Time Observed</label>
-            <input
+            <input form="{{ $auditFormId }}"
                 type="datetime-local"
                 name="system_datetime"
                 id="system_datetime"
@@ -177,7 +178,7 @@
 
         <div class="field">
             <label for="system_time_zone">System Time Zone</label>
-            <select name="system_time_zone" id="system_time_zone">
+            <select form="{{ $auditFormId }}" name="system_time_zone" id="system_time_zone">
                 <option value="">Unknown / Not visible</option>
                 @foreach($timeZones as $zoneValue => $zoneLabel)
                     <option value="{{ $zoneValue }}" {{ $selectedTimeZone === $zoneValue ? 'selected' : '' }}>
@@ -192,7 +193,7 @@
     <div class="field">
         <label for="ntp_enabled">NTP Enabled?</label>
         @php $selectedNtp = old('ntp_enabled', is_null($audit->ntp_enabled ?? null) ? '' : (int) $audit->ntp_enabled); @endphp
-        <select name="ntp_enabled" id="ntp_enabled">
+        <select form="{{ $auditFormId }}" name="ntp_enabled" id="ntp_enabled">
             <option value="" {{ $selectedNtp === '' ? 'selected' : '' }}>Unknown / Not visible</option>
             <option value="1" {{ (string) $selectedNtp === '1' ? 'selected' : '' }}>Yes</option>
             <option value="0" {{ (string) $selectedNtp === '0' ? 'selected' : '' }}>No</option>
@@ -202,7 +203,7 @@
 
     <div class="field">
         <label for="time_drift_notes">Time Drift Notes</label>
-        <textarea name="time_drift_notes" id="time_drift_notes" placeholder="Example: System clock matches actual time within 1 minute">{{ old('time_drift_notes', $audit->time_drift_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="time_drift_notes" id="time_drift_notes" placeholder="Example: System clock matches actual time within 1 minute">{{ old('time_drift_notes', $audit->time_drift_notes ?? '') }}</textarea>
         @error('time_drift_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -213,14 +214,14 @@
     <div class="grid">
         <div class="field">
             <label for="total_storage_amount">Total Storage</label>
-            <input type="number" min="0" step="0.01" name="total_storage_amount" id="total_storage_amount" value="{{ old('total_storage_amount', $audit->total_storage_amount ?? '') }}" placeholder="Example: 8">
+            <input form="{{ $auditFormId }}" type="number" min="0" step="0.01" name="total_storage_amount" id="total_storage_amount" value="{{ old('total_storage_amount', $audit->total_storage_amount ?? '') }}" placeholder="Example: 8">
             @error('total_storage_amount') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="total_storage_unit">Storage Unit</label>
             @php $selectedStorageUnit = old('total_storage_unit', $audit->total_storage_unit ?? 'TB'); @endphp
-            <select name="total_storage_unit" id="total_storage_unit">
+            <select form="{{ $auditFormId }}" name="total_storage_unit" id="total_storage_unit">
                 <option value="">Unknown</option>
                 <option value="GB" {{ $selectedStorageUnit === 'GB' ? 'selected' : '' }}>GB</option>
                 <option value="TB" {{ $selectedStorageUnit === 'TB' ? 'selected' : '' }}>TB</option>
@@ -232,14 +233,14 @@
     <div class="grid">
         <div class="field">
             <label for="used_storage">Used Storage / Recycling Status</label>
-            <input type="text" name="used_storage" id="used_storage" value="{{ old('used_storage', $audit->used_storage ?? '') }}" placeholder="Example: Full / recycling normally">
+            <input form="{{ $auditFormId }}" type="text" name="used_storage" id="used_storage" value="{{ old('used_storage', $audit->used_storage ?? '') }}" placeholder="Example: Full / recycling normally">
             @error('used_storage') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="storage_status">Storage Status</label>
             @php $selectedStorageStatus = old('storage_status', $audit->storage_status ?? 'normal'); @endphp
-            <select name="storage_status" id="storage_status">
+            <select form="{{ $auditFormId }}" name="storage_status" id="storage_status">
                 <option value="">Unknown / Not visible</option>
                 <option value="normal" {{ $selectedStorageStatus === 'normal' ? 'selected' : '' }}>Normal / Recycling</option>
                 <option value="warning" {{ $selectedStorageStatus === 'warning' ? 'selected' : '' }}>Warning observed</option>
@@ -253,7 +254,7 @@
     <div class="grid">
         <div class="field">
             <label for="oldest_recording_at">Oldest Recording Observed</label>
-            <input
+            <input form="{{ $auditFormId }}"
                 type="datetime-local"
                 name="oldest_recording_at"
                 id="oldest_recording_at"
@@ -265,7 +266,7 @@
         <div class="field">
             <label for="oldest_recording_verified">Oldest Recording Verified?</label>
             @php $selectedOldestVerified = old('oldest_recording_verified', is_null($audit->oldest_recording_verified ?? null) ? '' : (int) $audit->oldest_recording_verified); @endphp
-            <select name="oldest_recording_verified" id="oldest_recording_verified">
+            <select form="{{ $auditFormId }}" name="oldest_recording_verified" id="oldest_recording_verified">
                 <option value="" {{ $selectedOldestVerified === '' ? 'selected' : '' }}>Unknown / Not checked</option>
                 <option value="1" {{ (string) $selectedOldestVerified === '1' ? 'selected' : '' }}>Yes</option>
                 <option value="0" {{ (string) $selectedOldestVerified === '0' ? 'selected' : '' }}>No</option>
@@ -277,14 +278,14 @@
     <div class="grid">
         <div class="field">
             <label for="estimated_retention_days">Estimated Retention Days</label>
-            <input type="number" min="0" name="estimated_retention_days" id="estimated_retention_days" value="{{ old('estimated_retention_days', $audit->estimated_retention_days ?? $source->estimated_retention_days ?? '') }}">
+            <input form="{{ $auditFormId }}" type="number" min="0" name="estimated_retention_days" id="estimated_retention_days" value="{{ old('estimated_retention_days', $audit->estimated_retention_days ?? $source->estimated_retention_days ?? '') }}">
             @error('estimated_retention_days') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="recording_mode">Recording Mode</label>
             @php $selectedRecordingMode = old('recording_mode', $audit->recording_mode ?? ''); @endphp
-            <select name="recording_mode" id="recording_mode">
+            <select form="{{ $auditFormId }}" name="recording_mode" id="recording_mode">
                 <option value="">Unknown / Not visible</option>
                 <option value="all_continuous_24_7" {{ $selectedRecordingMode === 'all_continuous_24_7' ? 'selected' : '' }}>All cameras continuous 24/7</option>
                 <option value="hybrid_continuous_motion" {{ $selectedRecordingMode === 'hybrid_continuous_motion' ? 'selected' : '' }}>Hybrid: some continuous, some motion</option>
@@ -300,7 +301,7 @@
         <div class="field">
             <label for="export_test_performed">Export Test Performed?</label>
             @php $selectedExportPerformed = old('export_test_performed', is_null($audit->export_test_performed ?? null) ? '' : (int) $audit->export_test_performed); @endphp
-            <select name="export_test_performed" id="export_test_performed">
+            <select form="{{ $auditFormId }}" name="export_test_performed" id="export_test_performed">
                 <option value="" {{ $selectedExportPerformed === '' ? 'selected' : '' }}>Unknown / Not checked</option>
                 <option value="1" {{ (string) $selectedExportPerformed === '1' ? 'selected' : '' }}>Yes</option>
                 <option value="0" {{ (string) $selectedExportPerformed === '0' ? 'selected' : '' }}>No</option>
@@ -311,7 +312,7 @@
         <div class="field">
             <label for="export_test_status">Export Test Status</label>
             @php $selectedExportStatus = old('export_test_status', $audit->export_test_status ?? ''); @endphp
-            <select name="export_test_status" id="export_test_status">
+            <select form="{{ $auditFormId }}" name="export_test_status" id="export_test_status">
                 <option value="">Unknown / Not tested</option>
                 <option value="pass" {{ $selectedExportStatus === 'pass' ? 'selected' : '' }}>Pass</option>
                 <option value="warning" {{ $selectedExportStatus === 'warning' ? 'selected' : '' }}>Warning</option>
@@ -324,13 +325,73 @@
 
     <div class="field">
         <label for="export_test_notes">Export Test / Oldest Clip Notes</label>
-        <textarea name="export_test_notes" id="export_test_notes" placeholder="Example: Exported 30-second sample from oldest visible footage. Clip attachment will be added separately.">{{ old('export_test_notes', $audit->export_test_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="export_test_notes" id="export_test_notes" placeholder="Example: Exported 30-second sample from oldest visible footage. Clip attachment will be added separately.">{{ old('export_test_notes', $audit->export_test_notes ?? '') }}</textarea>
         @error('export_test_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 
+
+    @if($audit && $audit->id)
+        <hr>
+
+        <h3>Oldest / Export Test Clip</h3>
+        <p style="margin-top: -8px;">
+            Upload the oldest available clip or a sample export clip. This proves the system could retrieve/export video during the audit.
+        </p>
+
+        <form method="POST" action="{{ route('video-source-audits.attachments.store', $audit) }}" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="attachment_type" value="oldest_clip">
+
+            <div class="field">
+                <label for="oldest_clip_file">Clip File</label>
+                <input type="file" name="file" id="oldest_clip_file" required>
+                @error('file') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+                <label for="oldest_clip_notes">Clip Notes</label>
+                <textarea name="notes" id="oldest_clip_notes" placeholder="Example: Exported oldest available clip, 30 seconds, front door camera."></textarea>
+            </div>
+
+            <button type="submit" class="btn">Upload Clip</button>
+        </form>
+
+        @php
+            $clipAttachments = $audit->attachments->where('attachment_type', 'oldest_clip');
+        @endphp
+
+        @if($clipAttachments->count())
+            <table style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Clip</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>SHA-256</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($clipAttachments as $attachment)
+                        <tr>
+                            <td>
+                                <a href="{{ $attachment->url }}" target="_blank">{{ $attachment->original_filename }}</a>
+                                @if($attachment->notes)
+                                    <div style="font-size: 13px; color: #4b5563;">{{ $attachment->notes }}</div>
+                                @endif
+                            </td>
+                            <td>{{ $attachment->human_file_size }}</td>
+                            <td>{{ $attachment->created_at ? $attachment->created_at->format('M j, Y g:i A') : '-' }}</td>
+                            <td style="font-family: monospace; font-size: 12px; word-break: break-all;">{{ $attachment->sha256_hash ?? '-' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    @endif
+
     <div class="field">
         <label for="retention_notes">Retention Notes</label>
-        <textarea name="retention_notes" id="retention_notes">{{ old('retention_notes', $audit->retention_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="retention_notes" id="retention_notes">{{ old('retention_notes', $audit->retention_notes ?? '') }}</textarea>
         @error('retention_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -341,20 +402,20 @@
     <div class="grid">
         <div class="field">
             <label for="total_camera_count">Total Cameras</label>
-            <input type="number" min="0" name="total_camera_count" id="total_camera_count" value="{{ old('total_camera_count', $audit->total_camera_count ?? $source->camera_count ?? '') }}">
+            <input form="{{ $auditFormId }}" type="number" min="0" name="total_camera_count" id="total_camera_count" value="{{ old('total_camera_count', $audit->total_camera_count ?? $source->camera_count ?? '') }}">
             @error('total_camera_count') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="offline_camera_count">Offline Cameras</label>
-            <input type="number" min="0" name="offline_camera_count" id="offline_camera_count" value="{{ old('offline_camera_count', $audit->offline_camera_count ?? '') }}">
+            <input form="{{ $auditFormId }}" type="number" min="0" name="offline_camera_count" id="offline_camera_count" value="{{ old('offline_camera_count', $audit->offline_camera_count ?? '') }}">
             @error('offline_camera_count') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
 
     <div class="field">
         <label for="camera_view_notes">Camera View Notes</label>
-        <textarea name="camera_view_notes" id="camera_view_notes" placeholder="Example: Front door view normal; back lot camera shifted left; register camera offline">{{ old('camera_view_notes', $audit->camera_view_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="camera_view_notes" id="camera_view_notes" placeholder="Example: Front door view normal; back lot camera shifted left; register camera offline">{{ old('camera_view_notes', $audit->camera_view_notes ?? '') }}</textarea>
         @error('camera_view_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -365,38 +426,38 @@
     <div class="grid">
         <div class="field">
             <label for="admin_user_count">Admin User Count</label>
-            <input type="number" min="0" name="admin_user_count" id="admin_user_count" value="{{ old('admin_user_count', $audit->admin_user_count ?? '') }}">
+            <input form="{{ $auditFormId }}" type="number" min="0" name="admin_user_count" id="admin_user_count" value="{{ old('admin_user_count', $audit->admin_user_count ?? '') }}">
             @error('admin_user_count') <div class="error">{{ $message }}</div> @enderror
         </div>
 
         <div class="field">
             <label for="standard_user_count">Standard User Count</label>
-            <input type="number" min="0" name="standard_user_count" id="standard_user_count" value="{{ old('standard_user_count', $audit->standard_user_count ?? '') }}">
+            <input form="{{ $auditFormId }}" type="number" min="0" name="standard_user_count" id="standard_user_count" value="{{ old('standard_user_count', $audit->standard_user_count ?? '') }}">
             @error('standard_user_count') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
 
     <div class="field">
         <label for="last_login_notes">Last Login Notes</label>
-        <textarea name="last_login_notes" id="last_login_notes">{{ old('last_login_notes', $audit->last_login_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="last_login_notes" id="last_login_notes">{{ old('last_login_notes', $audit->last_login_notes ?? '') }}</textarea>
         @error('last_login_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 
     <div class="field">
         <label for="failed_login_notes">Failed Login Notes</label>
-        <textarea name="failed_login_notes" id="failed_login_notes">{{ old('failed_login_notes', $audit->failed_login_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="failed_login_notes" id="failed_login_notes">{{ old('failed_login_notes', $audit->failed_login_notes ?? '') }}</textarea>
         @error('failed_login_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 
     <div class="field">
         <label for="unusual_activity_notes">Unusual Activity Notes</label>
-        <textarea name="unusual_activity_notes" id="unusual_activity_notes">{{ old('unusual_activity_notes', $audit->unusual_activity_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="unusual_activity_notes" id="unusual_activity_notes">{{ old('unusual_activity_notes', $audit->unusual_activity_notes ?? '') }}</textarea>
         @error('unusual_activity_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 
     <div class="field">
         <label for="security_notes">Security Notes</label>
-        <textarea name="security_notes" id="security_notes">{{ old('security_notes', $audit->security_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="security_notes" id="security_notes">{{ old('security_notes', $audit->security_notes ?? '') }}</textarea>
         @error('security_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 </div>
@@ -408,7 +469,7 @@
         <div class="field">
             <label for="logs_reviewed">Logs Reviewed?</label>
             @php $selectedLogsReviewed = old('logs_reviewed', is_null($audit->logs_reviewed ?? null) ? '' : (int) $audit->logs_reviewed); @endphp
-            <select name="logs_reviewed" id="logs_reviewed">
+            <select form="{{ $auditFormId }}" name="logs_reviewed" id="logs_reviewed">
                 <option value="" {{ $selectedLogsReviewed === '' ? 'selected' : '' }}>Unknown / Not checked</option>
                 <option value="1" {{ (string) $selectedLogsReviewed === '1' ? 'selected' : '' }}>Yes</option>
                 <option value="0" {{ (string) $selectedLogsReviewed === '0' ? 'selected' : '' }}>No</option>
@@ -418,16 +479,76 @@
 
         <div class="field">
             <label for="log_review_window">Log Review Window</label>
-            <input type="text" name="log_review_window" id="log_review_window" value="{{ old('log_review_window', $audit->log_review_window ?? '') }}" placeholder="Example: Last 24 hours, last 7 days">
+            <input form="{{ $auditFormId }}" type="text" name="log_review_window" id="log_review_window" value="{{ old('log_review_window', $audit->log_review_window ?? '') }}" placeholder="Example: Last 24 hours, last 7 days">
             @error('log_review_window') <div class="error">{{ $message }}</div> @enderror
         </div>
     </div>
 
     <div class="field">
         <label for="log_notes">Log Notes</label>
-        <textarea name="log_notes" id="log_notes" placeholder="Example: No unusual failed logins observed. Export log file attachment will be added separately.">{{ old('log_notes', $audit->log_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="log_notes" id="log_notes" placeholder="Example: No unusual failed logins observed. Export log file attachment will be added separately.">{{ old('log_notes', $audit->log_notes ?? '') }}</textarea>
         @error('log_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
+
+    @if($audit && $audit->id)
+        <hr>
+
+        <h3>Log File Upload</h3>
+        <p style="margin-top: -8px;">
+            Upload the NVR/server event log export used during this audit.
+        </p>
+
+        <form method="POST" action="{{ route('video-source-audits.attachments.store', $audit) }}" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="attachment_type" value="log_file">
+
+            <div class="field">
+                <label for="audit_log_file">Log File</label>
+                <input type="file" name="file" id="audit_log_file" required>
+                @error('file') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+            <div class="field">
+                <label for="audit_log_notes">Log File Notes</label>
+                <textarea name="notes" id="audit_log_notes" placeholder="Example: Event log export covering last 24 hours."></textarea>
+            </div>
+
+            <button type="submit" class="btn">Upload Log</button>
+        </form>
+
+        @php
+            $logAttachments = $audit->attachments->where('attachment_type', 'log_file');
+        @endphp
+
+        @if($logAttachments->count())
+            <table style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Log File</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>SHA-256</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($logAttachments as $attachment)
+                        <tr>
+                            <td>
+                                <a href="{{ $attachment->url }}" target="_blank">{{ $attachment->original_filename }}</a>
+                                @if($attachment->notes)
+                                    <div style="font-size: 13px; color: #4b5563;">{{ $attachment->notes }}</div>
+                                @endif
+                            </td>
+                            <td>{{ $attachment->human_file_size }}</td>
+                            <td>{{ $attachment->created_at ? $attachment->created_at->format('M j, Y g:i A') : '-' }}</td>
+                            <td style="font-family: monospace; font-size: 12px; word-break: break-all;">{{ $attachment->sha256_hash ?? '-' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    @endif
+
 </div>
 
 <div class="card">
@@ -435,19 +556,19 @@
 
     <div class="field">
         <label for="overall_notes">Overall Notes</label>
-        <textarea name="overall_notes" id="overall_notes">{{ old('overall_notes', $audit->overall_notes ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="overall_notes" id="overall_notes">{{ old('overall_notes', $audit->overall_notes ?? '') }}</textarea>
         @error('overall_notes') <div class="error">{{ $message }}</div> @enderror
     </div>
 
     <div class="field">
         <label for="recommended_actions">Recommended Actions</label>
-        <textarea name="recommended_actions" id="recommended_actions">{{ old('recommended_actions', $audit->recommended_actions ?? '') }}</textarea>
+        <textarea form="{{ $auditFormId }}" name="recommended_actions" id="recommended_actions">{{ old('recommended_actions', $audit->recommended_actions ?? '') }}</textarea>
         @error('recommended_actions') <div class="error">{{ $message }}</div> @enderror
     </div>
 
     <div class="field">
         <label for="next_audit_due_at">Next Audit Due</label>
-        <input
+        <input form="{{ $auditFormId }}"
             type="datetime-local"
             name="next_audit_due_at"
             id="next_audit_due_at"
