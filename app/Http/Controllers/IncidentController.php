@@ -35,8 +35,14 @@ class IncidentController extends Controller
         }
 
         $sortColumn = $allowedSorts[$sort];
+        $user = Auth::user();
 
-        $incidentQuery = Incident::withCount('files');
+        $incidentQuery = Incident::with(['organization'])
+            ->withCount('files');
+
+        if ($user && $user->organization_id) {
+            $incidentQuery->where('organization_id', $user->organization_id);
+        }
 
         if ($showArchived) {
             $incidentQuery->whereNotNull('archived_at');
@@ -60,7 +66,10 @@ class IncidentController extends Controller
 
     public function start()
     {
+        $user = Auth::user();
+
         $incident = Incident::create([
+            'organization_id' => $user?->organization_id,
             'title' => 'Starting new incident...',
             'incident_type' => null,
             'status' => 'open',
@@ -81,6 +90,7 @@ class IncidentController extends Controller
             'incident_created',
             'Incident #' . $incident->id . ' was started.',
             [
+                'organization_id' => $incident->organization_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'created_by' => Auth::id(),
@@ -96,6 +106,7 @@ class IncidentController extends Controller
     {
         $validated = $this->validateIncident($request);
 
+        $validated['organization_id'] = Auth::user()?->organization_id;
         $validated['created_by'] = Auth::id();
 
         $incident = Incident::create($validated);
@@ -105,6 +116,7 @@ class IncidentController extends Controller
             'incident_created',
             'Incident #' . $incident->id . ' was created.',
             [
+                'organization_id' => $incident->organization_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'created_by' => Auth::id(),
@@ -118,7 +130,10 @@ class IncidentController extends Controller
 
     public function show(Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
         $incident->load([
+            'organization',
             'files.uploader',
             'events.actor',
             'archivedBy',
@@ -129,19 +144,26 @@ class IncidentController extends Controller
 
     public function edit(Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
         if ($incident->archived_at) {
             return redirect()
                 ->route('incidents.show', $incident)
                 ->with('success', 'Archived incidents cannot be edited. Restore the incident first.');
         }
 
-        $incident->load('files.uploader');
+        $incident->load([
+            'organization',
+            'files.uploader',
+        ]);
 
         return view('incidents.edit', compact('incident'));
     }
 
     public function update(Request $request, Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
         if ($incident->archived_at) {
             return redirect()
                 ->route('incidents.show', $incident)
@@ -194,6 +216,7 @@ class IncidentController extends Controller
             'incident_updated',
             'Incident #' . $incident->id . ' was updated.',
             [
+                'organization_id' => $incident->organization_id,
                 'changed_fields' => $changedFields,
             ]
         );
@@ -205,6 +228,8 @@ class IncidentController extends Controller
 
     public function destroy(Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
         if ($incident->archived_at) {
             return redirect()
                 ->route('incidents.show', $incident)
@@ -221,6 +246,7 @@ class IncidentController extends Controller
             'incident_archived',
             'Incident #' . $incident->id . ' was archived.',
             [
+                'organization_id' => $incident->organization_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'archived_by' => Auth::id(),
@@ -235,6 +261,8 @@ class IncidentController extends Controller
 
     public function restore(Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
         if (!$incident->archived_at) {
             return redirect()
                 ->route('incidents.show', $incident)
@@ -254,6 +282,7 @@ class IncidentController extends Controller
             'incident_restored',
             'Incident #' . $incident->id . ' was restored from archive.',
             [
+                'organization_id' => $incident->organization_id,
                 'previous_archived_at' => $previousArchivedAt?->toDateTimeString(),
                 'previous_archived_by' => $previousArchivedBy,
                 'restored_by' => Auth::id(),
@@ -277,6 +306,19 @@ class IncidentController extends Controller
             'summary' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
         ]);
+    }
+
+    private function authorizeIncidentAccess(Incident $incident): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->organization_id) {
+            return;
+        }
+
+        if ((int) $incident->organization_id !== (int) $user->organization_id) {
+            abort(403, 'You do not have access to this incident.');
+        }
     }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void

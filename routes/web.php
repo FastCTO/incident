@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Session;
 
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IncidentFileController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProfileController;
 
 /*
@@ -39,6 +40,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::put('/profile', [ProfileController::class, 'update'])
         ->name('profile.update');
+
+    Route::get('/organization', [OrganizationController::class, 'edit'])
+        ->name('organization.edit');
+
+    Route::put('/organization', [OrganizationController::class, 'update'])
+        ->name('organization.update');
 
     Route::post('/incidents/start', [IncidentController::class, 'start'])
         ->name('incidents.start');

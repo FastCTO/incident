@@ -10,6 +10,7 @@ class Incident extends Model
     use HasFactory;
 
     protected $fillable = [
+        'organization_id',
         'title',
         'incident_type',
         'status',
@@ -27,6 +28,11 @@ class Incident extends Model
         'incident_datetime' => 'datetime',
         'archived_at' => 'datetime',
     ];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
 
     public function files()
     {
