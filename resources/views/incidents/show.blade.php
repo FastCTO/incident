@@ -36,6 +36,16 @@
 
                 <div class="details">
                     <div>
+                        <div class="label">Account</div>
+                        <div class="value">{{ $incident->organization->name ?? '-' }}</div>
+                    </div>
+
+                    <div>
+                        <div class="label">Site</div>
+                        <div class="value">{{ $incident->site->name ?? '-' }}</div>
+                    </div>
+
+                    <div>
                         <div class="label">Type</div>
                         <div class="value">{{ $incident->incident_type ?? '-' }}</div>
                     </div>

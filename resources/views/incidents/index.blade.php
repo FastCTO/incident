@@ -51,6 +51,7 @@
 
             <div style="display: flex; gap: 10px; align-items: center;">
                 <a href="{{ route('organization.edit') }}" class="btn btn-secondary">Organization</a>
+                <a href="{{ route('sites.index') }}" class="btn btn-secondary">Sites</a>
                 <a href="{{ route('profile.edit') }}" class="btn btn-secondary">My Profile</a>
 
                 @if($showArchived)
@@ -72,6 +73,7 @@
                     <tr>
                         <th>{!! sort_link('Incident #', 'id', $sort, $direction) !!}</th>
                         <th>Account</th>
+                        <th>Site</th>
                         <th>{!! sort_link('Title', 'title', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Type', 'type', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Status', 'status', $sort, $direction) !!}</th>
@@ -94,6 +96,8 @@
                             </td>
 
                             <td>{{ $incident->organization->name ?? '-' }}</td>
+
+                            <td>{{ $incident->site->name ?? '-' }}</td>
 
                             <td>
                                 <a href="{{ route('incidents.show', $incident) }}">

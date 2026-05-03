@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Incident;
 use App\Models\IncidentEvent;
 use App\Models\IncidentFile;
+use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,11 +15,36 @@ class IncidentFileController extends Controller
 {
     public function store(Request $request, Incident $incident)
     {
+        $this->authorizeIncidentAccess($incident);
+
+        if ($incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Archived incidents cannot be updated. Restore the incident first.');
+        }
+
         /*
          * If the upload form includes current incident fields, save them first.
          * This prevents losing unsaved incident edits when the user clicks Upload File.
          */
         $incidentData = $request->validate([
+            'incident_site_id' => [
+                'nullable',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    if (!$value) {
+                        return;
+                    }
+
+                    $siteExists = Site::where('id', $value)
+                        ->where('organization_id', Auth::user()?->organization_id)
+                        ->exists();
+
+                    if (!$siteExists) {
+                        $fail('The selected site is not valid for your organization.');
+                    }
+                },
+            ],
             'incident_title' => ['nullable', 'string', 'max:255'],
             'incident_type' => ['nullable', 'string', 'max:255'],
             'incident_status' => ['nullable', 'string', 'max:50'],
@@ -31,6 +57,7 @@ class IncidentFileController extends Controller
 
         if (!empty($incidentData['incident_title'])) {
             $incident->update([
+                'site_id' => $incidentData['incident_site_id'] ?? null,
                 'title' => $incidentData['incident_title'],
                 'incident_type' => $incidentData['incident_type'] ?? null,
                 'status' => $incidentData['incident_status'] ?? $incident->status,
@@ -46,6 +73,8 @@ class IncidentFileController extends Controller
                 'incident_updated',
                 'Incident #' . $incident->id . ' was updated during file upload.',
                 [
+                    'organization_id' => $incident->organization_id,
+                    'site_id' => $incident->site_id,
                     'source' => 'file_upload_form',
                 ]
             );
@@ -105,6 +134,8 @@ class IncidentFileController extends Controller
             'file_uploaded',
             'File uploaded: ' . $incidentFile->original_filename,
             [
+                'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'incident_file_id' => $incidentFile->id,
                 'original_filename' => $incidentFile->original_filename,
                 'stored_filename' => $incidentFile->stored_filename,
@@ -123,11 +154,21 @@ class IncidentFileController extends Controller
 
     public function destroy(Incident $incident, IncidentFile $file)
     {
+        $this->authorizeIncidentAccess($incident);
+
+        if ($incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Archived incident files cannot be removed. Restore the incident first.');
+        }
+
         if ($file->incident_id !== $incident->id) {
             abort(404);
         }
 
         $fileMetadata = [
+            'organization_id' => $incident->organization_id,
+            'site_id' => $incident->site_id,
             'incident_file_id' => $file->id,
             'original_filename' => $file->original_filename,
             'stored_filename' => $file->stored_filename,
@@ -180,6 +221,19 @@ class IncidentFileController extends Controller
         }
 
         return 'other';
+    }
+
+    private function authorizeIncidentAccess(Incident $incident): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->organization_id) {
+            return;
+        }
+
+        if ((int) $incident->organization_id !== (int) $user->organization_id) {
+            abort(403, 'You do not have access to this incident.');
+        }
     }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void

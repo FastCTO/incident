@@ -1,0 +1,113 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Site;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class SiteController extends Controller
+{
+    public function index()
+    {
+        $organization = Auth::user()->organization;
+
+        $sites = Site::where('organization_id', $organization?->id)
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('sites.index', compact('sites', 'organization'));
+    }
+
+    public function create()
+    {
+        return view('sites.create');
+    }
+
+    public function store(Request $request)
+    {
+        $organization = Auth::user()->organization;
+
+        if (!$organization) {
+            abort(403, 'No organization assigned.');
+        }
+
+        $validated = $this->validateSite($request);
+        $validated['organization_id'] = $organization->id;
+
+        $site = Site::create($validated);
+
+        return redirect()
+            ->route('sites.edit', $site)
+            ->with('success', 'Site created successfully.');
+    }
+
+    public function edit(Site $site)
+    {
+        $this->authorizeSiteAccess($site);
+
+        return view('sites.edit', compact('site'));
+    }
+
+    public function update(Request $request, Site $site)
+    {
+        $this->authorizeSiteAccess($site);
+
+        $validated = $this->validateSite($request);
+
+        $site->update($validated);
+
+        return redirect()
+            ->route('sites.edit', $site)
+            ->with('success', 'Site updated successfully.');
+    }
+
+    public function destroy(Site $site)
+    {
+        $this->authorizeSiteAccess($site);
+
+        if ($site->incidents()->count() > 0) {
+            return redirect()
+                ->route('sites.index')
+                ->with('success', 'Site has incidents and cannot be deleted. Rename or mark inactive instead.');
+        }
+
+        $site->delete();
+
+        return redirect()
+            ->route('sites.index')
+            ->with('success', 'Site deleted successfully.');
+    }
+
+    private function validateSite(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'site_type' => ['nullable', 'string', 'max:100'],
+            'status' => ['required', 'string', 'max:100'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'contact_email' => ['nullable', 'email', 'max:255'],
+            'contact_phone' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:50'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'time_zone' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function authorizeSiteAccess(Site $site): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->organization_id) {
+            abort(403, 'No organization assigned.');
+        }
+
+        if ((int) $site->organization_id !== (int) $user->organization_id) {
+            abort(403, 'You do not have access to this site.');
+        }
+    }
+}

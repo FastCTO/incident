@@ -44,6 +44,28 @@
 
             <div class="grid">
                 <div class="field">
+                    <label for="site_id">Site</label>
+                    @php $selectedSiteId = old('site_id', $incident->site_id); @endphp
+
+                    <select name="site_id" id="site_id">
+                        <option value="">No site selected</option>
+                        @foreach($sites as $site)
+                            <option value="{{ $site->id }}" {{ (string) $selectedSiteId === (string) $site->id ? 'selected' : '' }}>
+                                {{ $site->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('site_id') <div class="error">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="field">
+                    <label>Account</label>
+                    <input type="text" value="{{ $incident->organization->name ?? Auth::user()->organization_display_name ?? '-' }}" readonly>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="field">
                     <label for="incident_type">Incident Type</label>
                     @php $selectedType = old('incident_type', $incident->incident_type); @endphp
 
@@ -125,6 +147,7 @@
         >
             @csrf
 
+            <input type="hidden" name="incident_site_id" id="upload_incident_site_id">
             <input type="hidden" name="incident_title" id="upload_incident_title">
             <input type="hidden" name="incident_type" id="upload_incident_type">
             <input type="hidden" name="incident_status" id="upload_incident_status">
@@ -225,6 +248,7 @@
         }
 
         uploadForm.addEventListener('submit', function () {
+            document.getElementById('upload_incident_site_id').value = document.getElementById('site_id').value;
             document.getElementById('upload_incident_title').value = document.getElementById('title').value;
             document.getElementById('upload_incident_type').value = document.getElementById('incident_type').value;
             document.getElementById('upload_incident_status').value = document.getElementById('status').value;

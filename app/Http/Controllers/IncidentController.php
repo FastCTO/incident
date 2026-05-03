@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentEvent;
+use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,7 +38,7 @@ class IncidentController extends Controller
         $sortColumn = $allowedSorts[$sort];
         $user = Auth::user();
 
-        $incidentQuery = Incident::with(['organization'])
+        $incidentQuery = Incident::with(['organization', 'site'])
             ->withCount('files');
 
         if ($user && $user->organization_id) {
@@ -70,6 +71,7 @@ class IncidentController extends Controller
 
         $incident = Incident::create([
             'organization_id' => $user?->organization_id,
+            'site_id' => $this->defaultSiteIdForCurrentUser(),
             'title' => 'Starting new incident...',
             'incident_type' => null,
             'status' => 'open',
@@ -91,6 +93,7 @@ class IncidentController extends Controller
             'Incident #' . $incident->id . ' was started.',
             [
                 'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'created_by' => Auth::id(),
@@ -109,6 +112,10 @@ class IncidentController extends Controller
         $validated['organization_id'] = Auth::user()?->organization_id;
         $validated['created_by'] = Auth::id();
 
+        if (empty($validated['site_id'])) {
+            $validated['site_id'] = $this->defaultSiteIdForCurrentUser();
+        }
+
         $incident = Incident::create($validated);
 
         $this->logIncidentEvent(
@@ -117,6 +124,7 @@ class IncidentController extends Controller
             'Incident #' . $incident->id . ' was created.',
             [
                 'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'created_by' => Auth::id(),
@@ -134,6 +142,7 @@ class IncidentController extends Controller
 
         $incident->load([
             'organization',
+            'site',
             'files.uploader',
             'events.actor',
             'archivedBy',
@@ -154,10 +163,13 @@ class IncidentController extends Controller
 
         $incident->load([
             'organization',
+            'site',
             'files.uploader',
         ]);
 
-        return view('incidents.edit', compact('incident'));
+        $sites = $this->sitesForCurrentUser();
+
+        return view('incidents.edit', compact('incident', 'sites'));
     }
 
     public function update(Request $request, Incident $incident)
@@ -173,6 +185,7 @@ class IncidentController extends Controller
         $validated = $this->validateIncident($request);
 
         $before = $incident->only([
+            'site_id',
             'title',
             'incident_type',
             'status',
@@ -188,6 +201,7 @@ class IncidentController extends Controller
         $afterIncident = $incident->fresh();
 
         $after = $afterIncident->only([
+            'site_id',
             'title',
             'incident_type',
             'status',
@@ -217,6 +231,7 @@ class IncidentController extends Controller
             'Incident #' . $incident->id . ' was updated.',
             [
                 'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'changed_fields' => $changedFields,
             ]
         );
@@ -247,6 +262,7 @@ class IncidentController extends Controller
             'Incident #' . $incident->id . ' was archived.',
             [
                 'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'title' => $incident->title,
                 'status' => $incident->status,
                 'archived_by' => Auth::id(),
@@ -283,6 +299,7 @@ class IncidentController extends Controller
             'Incident #' . $incident->id . ' was restored from archive.',
             [
                 'organization_id' => $incident->organization_id,
+                'site_id' => $incident->site_id,
                 'previous_archived_at' => $previousArchivedAt?->toDateTimeString(),
                 'previous_archived_by' => $previousArchivedBy,
                 'restored_by' => Auth::id(),
@@ -296,7 +313,26 @@ class IncidentController extends Controller
 
     private function validateIncident(Request $request): array
     {
+        $user = Auth::user();
+
         return $request->validate([
+            'site_id' => [
+                'nullable',
+                'integer',
+                function ($attribute, $value, $fail) use ($user) {
+                    if (!$value) {
+                        return;
+                    }
+
+                    $siteExists = Site::where('id', $value)
+                        ->where('organization_id', $user?->organization_id)
+                        ->exists();
+
+                    if (!$siteExists) {
+                        $fail('The selected site is not valid for your organization.');
+                    }
+                },
+            ],
             'title' => ['required', 'string', 'max:255'],
             'incident_type' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'string', 'max:50'],
@@ -319,6 +355,30 @@ class IncidentController extends Controller
         if ((int) $incident->organization_id !== (int) $user->organization_id) {
             abort(403, 'You do not have access to this incident.');
         }
+    }
+
+    private function sitesForCurrentUser()
+    {
+        $user = Auth::user();
+
+        return Site::where('organization_id', $user?->organization_id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function defaultSiteIdForCurrentUser(): ?int
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->organization_id) {
+            return null;
+        }
+
+        return Site::where('organization_id', $user->organization_id)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->value('id');
     }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void

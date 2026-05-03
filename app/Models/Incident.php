@@ -11,6 +11,7 @@ class Incident extends Model
 
     protected $fillable = [
         'organization_id',
+        'site_id',
         'title',
         'incident_type',
         'status',
@@ -32,6 +33,11 @@ class Incident extends Model
     public function organization()
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
     }
 
     public function files()
