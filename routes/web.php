@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Session;
 
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IncidentFileController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,8 +34,17 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('incidents.index');
     })->name('dashboard');
 
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::put('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
     Route::post('/incidents/start', [IncidentController::class, 'start'])
         ->name('incidents.start');
+
+    Route::post('/incidents/{incident}/restore', [IncidentController::class, 'restore'])
+        ->name('incidents.restore');
 
     Route::resource('incidents', IncidentController::class);
 
@@ -60,6 +70,3 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login')->with('status', 'Logged out successfully.');
     })->name('logout');
 });
-
-Route::post('/incidents/{incident}/restore', [\App\Http\Controllers\IncidentController::class, 'restore'])
-    ->name('incidents.restore');

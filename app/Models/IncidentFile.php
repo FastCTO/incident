@@ -60,7 +60,8 @@ class IncidentFile extends Model
             return 'Unknown user';
         }
 
-        return $this->uploader->name
+        return $this->uploader->display_name
+            ?? $this->uploader->name
             ?? $this->uploader->email
             ?? 'User #' . $this->uploaded_by;
     }

@@ -19,7 +19,12 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
+        'cell_phone',
+        'organization_name',
+        'role_title',
         'password',
     ];
 
@@ -42,4 +47,34 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function getDisplayNameAttribute(): string
+    {
+        $fullName = trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+
+        if ($fullName !== '') {
+            return $fullName;
+        }
+
+        return $this->name
+            ?? $this->email
+            ?? 'User #' . $this->id;
+    }
+
+    public function getProfileLabelAttribute(): string
+    {
+        $parts = [];
+
+        $parts[] = $this->display_name;
+
+        if ($this->role_title) {
+            $parts[] = $this->role_title;
+        }
+
+        if ($this->organization_name) {
+            $parts[] = $this->organization_name;
+        }
+
+        return implode(' - ', array_filter($parts));
+    }
 }

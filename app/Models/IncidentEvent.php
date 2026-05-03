@@ -41,7 +41,8 @@ class IncidentEvent extends Model
             return 'System / Unknown user';
         }
 
-        return $this->actor->name
+        return $this->actor->display_name
+            ?? $this->actor->name
             ?? $this->actor->email
             ?? 'User #' . $this->user_id;
     }
