@@ -14,6 +14,10 @@ class IncidentEvent extends Model
         'user_id',
         'event_type',
         'description',
+        'ip_address',
+        'user_agent',
+        'request_method',
+        'request_path',
         'metadata',
     ];
 

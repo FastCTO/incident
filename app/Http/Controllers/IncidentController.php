@@ -137,7 +137,9 @@ class IncidentController extends Controller
 
         $incident->update($validated);
 
-        $after = $incident->fresh()->only([
+        $afterIncident = $incident->fresh();
+
+        $after = $afterIncident->only([
             'title',
             'incident_type',
             'status',
@@ -177,6 +179,16 @@ class IncidentController extends Controller
 
     public function destroy(Incident $incident)
     {
+        $this->logIncidentEvent(
+            $incident,
+            'incident_deleted',
+            'Incident #' . $incident->id . ' was deleted.',
+            [
+                'title' => $incident->title,
+                'status' => $incident->status,
+            ]
+        );
+
         $incident->delete();
 
         return redirect()
@@ -200,11 +212,17 @@ class IncidentController extends Controller
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
     {
+        $request = request();
+
         IncidentEvent::create([
             'incident_id' => $incident->id,
             'user_id' => Auth::id(),
             'event_type' => $eventType,
             'description' => $description,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_method' => $request->method(),
+            'request_path' => $request->path(),
             'metadata' => $metadata,
         ]);
     }

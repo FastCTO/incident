@@ -19,6 +19,12 @@ return new class extends Migration
 
             $table->string('event_type', 100);
             $table->text('description')->nullable();
+
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->string('request_method', 20)->nullable();
+            $table->string('request_path')->nullable();
+
             $table->json('metadata')->nullable();
 
             $table->timestamps();
@@ -26,6 +32,7 @@ return new class extends Migration
             $table->index('incident_id');
             $table->index('user_id');
             $table->index('event_type');
+            $table->index('ip_address');
             $table->index('created_at');
         });
     }

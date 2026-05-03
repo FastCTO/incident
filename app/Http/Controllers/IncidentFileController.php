@@ -184,11 +184,17 @@ class IncidentFileController extends Controller
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
     {
+        $request = request();
+
         IncidentEvent::create([
             'incident_id' => $incident->id,
             'user_id' => Auth::id(),
             'event_type' => $eventType,
             'description' => $description,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'request_method' => $request->method(),
+            'request_path' => $request->path(),
             'metadata' => $metadata,
         ]);
     }
