@@ -13,6 +13,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\VideoSourceAuditController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,22 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('organizations', OrganizationManagementController::class)->except(['show']);
 
     Route::resource('nvr-systems', NvrSystemController::class)->except(['show']);
+
+    Route::get('/nvr-systems/{nvrSystem}/audits/create', [VideoSourceAuditController::class, 'create'])
+        ->name('video-source-audits.create');
+
+    Route::post('/nvr-systems/{nvrSystem}/audits', [VideoSourceAuditController::class, 'store'])
+        ->name('video-source-audits.store');
+
+    Route::get('/video-source-audits/{audit}/edit', [VideoSourceAuditController::class, 'edit'])
+        ->name('video-source-audits.edit');
+
+    Route::put('/video-source-audits/{audit}', [VideoSourceAuditController::class, 'update'])
+        ->name('video-source-audits.update');
+
+    Route::delete('/video-source-audits/{audit}', [VideoSourceAuditController::class, 'destroy'])
+        ->name('video-source-audits.destroy');
+
 
     Route::post('/incidents/start', [IncidentController::class, 'start'])
         ->name('incidents.start');

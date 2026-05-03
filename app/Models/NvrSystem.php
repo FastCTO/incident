@@ -46,9 +46,19 @@ class NvrSystem extends Model
         return $this->belongsTo(Site::class);
     }
 
+    public function audits()
+    {
+        return $this->hasMany(VideoSourceAudit::class, 'nvr_system_id')->latest('performed_at')->latest();
+    }
+
+    public function latestAudit()
+    {
+        return $this->hasOne(VideoSourceAudit::class, 'nvr_system_id')->latestOfMany('performed_at');
+    }
+
     public function getDisplayNameAttribute(): string
     {
-        return $this->name ?: 'NVR/VMS #' . $this->id;
+        return $this->name ?: 'Video Source #' . $this->id;
     }
 
     public function getSystemLabelAttribute(): string
@@ -56,7 +66,7 @@ class NvrSystem extends Model
         $parts = array_filter([
             $this->manufacturer,
             $this->model,
-            $this->system_type ? strtoupper($this->system_type) : null,
+            $this->system_type ? strtoupper(str_replace('_', ' ', $this->system_type)) : null,
         ]);
 
         return $parts ? implode(' / ', $parts) : '-';
