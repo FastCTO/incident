@@ -12,7 +12,7 @@
             <option value="">Select site</option>
             @foreach($sites as $site)
                 <option value="{{ $site->id }}" {{ (string) $selectedSiteId === (string) $site->id ? 'selected' : '' }}>
-                    {{ $site->name }}
+                    {{ $site->name }} - {{ $site->organization->name ?? 'No organization' }}
                 </option>
             @endforeach
         </select>

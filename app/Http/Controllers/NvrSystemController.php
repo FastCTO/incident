@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NvrSystem;
+use App\Models\Organization;
 use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,10 +12,8 @@ class NvrSystemController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
         $nvrSystems = NvrSystem::with(['site', 'organization'])
-            ->where('organization_id', $user?->organization_id)
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
             ->orderBy('name')
             ->paginate(20);
 
@@ -23,7 +22,7 @@ class NvrSystemController extends Controller
 
     public function create()
     {
-        $sites = $this->sitesForCurrentUser();
+        $sites = $this->sitesForVisibleOrganizations();
 
         return view('nvr-systems.create', compact('sites'));
     }
@@ -33,7 +32,7 @@ class NvrSystemController extends Controller
         $validated = $this->validateNvrSystem($request);
 
         $site = Site::where('id', $validated['site_id'])
-            ->where('organization_id', Auth::user()?->organization_id)
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
             ->firstOrFail();
 
         $validated['organization_id'] = $site->organization_id;
@@ -49,7 +48,7 @@ class NvrSystemController extends Controller
     {
         $this->authorizeNvrAccess($nvrSystem);
 
-        $sites = $this->sitesForCurrentUser();
+        $sites = $this->sitesForVisibleOrganizations();
 
         return view('nvr-systems.edit', compact('nvrSystem', 'sites'));
     }
@@ -61,7 +60,7 @@ class NvrSystemController extends Controller
         $validated = $this->validateNvrSystem($request);
 
         $site = Site::where('id', $validated['site_id'])
-            ->where('organization_id', Auth::user()?->organization_id)
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
             ->firstOrFail();
 
         $validated['organization_id'] = $site->organization_id;
@@ -92,11 +91,11 @@ class NvrSystemController extends Controller
                 'integer',
                 function ($attribute, $value, $fail) {
                     $siteExists = Site::where('id', $value)
-                        ->where('organization_id', Auth::user()?->organization_id)
+                        ->whereIn('organization_id', $this->visibleOrganizationIds())
                         ->exists();
 
                     if (!$siteExists) {
-                        $fail('The selected site is not valid for your organization.');
+                        $fail('The selected site is not valid for your access level.');
                     }
                 },
             ],
@@ -119,24 +118,65 @@ class NvrSystemController extends Controller
         ]);
     }
 
-    private function authorizeNvrAccess(NvrSystem $nvrSystem): void
+    private function currentOrganization(): ?Organization
     {
-        $user = Auth::user();
+        $organizationId = Auth::user()?->organization_id;
 
-        if (!$user || !$user->organization_id) {
-            abort(403, 'No organization assigned.');
+        if (!$organizationId) {
+            return null;
         }
 
-        if ((int) $nvrSystem->organization_id !== (int) $user->organization_id) {
-            abort(403, 'You do not have access to this NVR/VMS profile.');
-        }
+        return Organization::find($organizationId);
     }
 
-    private function sitesForCurrentUser()
+    private function currentUserIsPlatformOwner(): bool
     {
-        return Site::where('organization_id', Auth::user()?->organization_id)
+        return $this->currentOrganization()?->organization_type === 'platform_owner';
+    }
+
+    private function currentUserIsChannelPartner(): bool
+    {
+        return $this->currentOrganization()?->organization_type === 'channel_partner';
+    }
+
+    private function visibleOrganizationIds(): array
+    {
+        $organization = $this->currentOrganization();
+
+        if (!$organization) {
+            return [];
+        }
+
+        if ($this->currentUserIsPlatformOwner()) {
+            return Organization::pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        if ($this->currentUserIsChannelPartner()) {
+            return Organization::where('id', $organization->id)
+                ->orWhere('parent_organization_id', $organization->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        return [(int) $organization->id];
+    }
+
+    private function sitesForVisibleOrganizations()
+    {
+        return Site::with('organization')
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
+    }
+
+    private function authorizeNvrAccess(NvrSystem $nvrSystem): void
+    {
+        if (!in_array((int) $nvrSystem->organization_id, $this->visibleOrganizationIds(), true)) {
+            abort(403, 'You do not have access to this NVR/VMS profile.');
+        }
     }
 }
