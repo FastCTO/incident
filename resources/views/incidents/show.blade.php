@@ -253,9 +253,19 @@
                         <button type="submit" class="btn btn-secondary">Archive Incident</button>
                     </form>
                 @else
-                    <div class="notice">
-                        This incident is archived. Editing is disabled for now.
+                    <div class="notice" style="margin-bottom: 16px;">
+                        This incident is archived. Editing is disabled unless the incident is restored.
                     </div>
+
+                    <form
+                        method="POST"
+                        action="{{ route('incidents.restore', $incident) }}"
+                        onsubmit="return confirm('Restore this incident to the active incident list?');"
+                        style="margin-bottom: 16px;"
+                    >
+                        @csrf
+                        <button type="submit" class="btn">Restore Incident</button>
+                    </form>
                 @endif
 
                 <p><a href="{{ route('incidents.index') }}" class="btn btn-secondary">Back to Active Incidents</a></p>

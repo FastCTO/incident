@@ -129,6 +129,12 @@ class IncidentController extends Controller
 
     public function edit(Incident $incident)
     {
+        if ($incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Archived incidents cannot be edited. Restore the incident first.');
+        }
+
         $incident->load('files.uploader');
 
         return view('incidents.edit', compact('incident'));
@@ -136,6 +142,12 @@ class IncidentController extends Controller
 
     public function update(Request $request, Incident $incident)
     {
+        if ($incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Archived incidents cannot be updated. Restore the incident first.');
+        }
+
         $validated = $this->validateIncident($request);
 
         $before = $incident->only([
@@ -219,6 +231,38 @@ class IncidentController extends Controller
         return redirect()
             ->route('incidents.index')
             ->with('success', 'Incident archived successfully.');
+    }
+
+    public function restore(Incident $incident)
+    {
+        if (!$incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Incident is already active.');
+        }
+
+        $previousArchivedAt = $incident->archived_at;
+        $previousArchivedBy = $incident->archived_by;
+
+        $incident->update([
+            'archived_at' => null,
+            'archived_by' => null,
+        ]);
+
+        $this->logIncidentEvent(
+            $incident,
+            'incident_restored',
+            'Incident #' . $incident->id . ' was restored from archive.',
+            [
+                'previous_archived_at' => $previousArchivedAt?->toDateTimeString(),
+                'previous_archived_by' => $previousArchivedBy,
+                'restored_by' => Auth::id(),
+            ]
+        );
+
+        return redirect()
+            ->route('incidents.show', $incident)
+            ->with('success', 'Incident restored successfully.');
     }
 
     private function validateIncident(Request $request): array

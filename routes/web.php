@@ -60,3 +60,6 @@ Route::middleware(['auth'])->group(function () {
         return redirect('/login')->with('status', 'Logged out successfully.');
     })->name('logout');
 });
+
+Route::post('/incidents/{incident}/restore', [\App\Http\Controllers\IncidentController::class, 'restore'])
+    ->name('incidents.restore');
