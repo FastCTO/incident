@@ -11,6 +11,10 @@
 
         <a href="{{ route('incidents.index', ['archived' => 1]) }}">Archived</a>
 
+        <a href="{{ route('sites.index') }}">Sites</a>
+
+        <a href="{{ route('nvr-systems.index') }}">NVR/VMS</a>
+
         <a href="{{ route('organization.edit') }}">Organization</a>
 
         <a href="{{ route('profile.edit') }}">My Profile</a>

@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\NvrSystem;
+use App\Models\Site;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class NvrSystemController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+
+        $nvrSystems = NvrSystem::with(['site', 'organization'])
+            ->where('organization_id', $user?->organization_id)
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('nvr-systems.index', compact('nvrSystems'));
+    }
+
+    public function create()
+    {
+        $sites = $this->sitesForCurrentUser();
+
+        return view('nvr-systems.create', compact('sites'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $this->validateNvrSystem($request);
+
+        $site = Site::where('id', $validated['site_id'])
+            ->where('organization_id', Auth::user()?->organization_id)
+            ->firstOrFail();
+
+        $validated['organization_id'] = $site->organization_id;
+
+        $nvrSystem = NvrSystem::create($validated);
+
+        return redirect()
+            ->route('nvr-systems.edit', $nvrSystem)
+            ->with('success', 'NVR/VMS profile created successfully.');
+    }
+
+    public function edit(NvrSystem $nvrSystem)
+    {
+        $this->authorizeNvrAccess($nvrSystem);
+
+        $sites = $this->sitesForCurrentUser();
+
+        return view('nvr-systems.edit', compact('nvrSystem', 'sites'));
+    }
+
+    public function update(Request $request, NvrSystem $nvrSystem)
+    {
+        $this->authorizeNvrAccess($nvrSystem);
+
+        $validated = $this->validateNvrSystem($request);
+
+        $site = Site::where('id', $validated['site_id'])
+            ->where('organization_id', Auth::user()?->organization_id)
+            ->firstOrFail();
+
+        $validated['organization_id'] = $site->organization_id;
+
+        $nvrSystem->update($validated);
+
+        return redirect()
+            ->route('nvr-systems.edit', $nvrSystem)
+            ->with('success', 'NVR/VMS profile updated successfully.');
+    }
+
+    public function destroy(NvrSystem $nvrSystem)
+    {
+        $this->authorizeNvrAccess($nvrSystem);
+
+        $nvrSystem->delete();
+
+        return redirect()
+            ->route('nvr-systems.index')
+            ->with('success', 'NVR/VMS profile deleted successfully.');
+    }
+
+    private function validateNvrSystem(Request $request): array
+    {
+        return $request->validate([
+            'site_id' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    $siteExists = Site::where('id', $value)
+                        ->where('organization_id', Auth::user()?->organization_id)
+                        ->exists();
+
+                    if (!$siteExists) {
+                        $fail('The selected site is not valid for your organization.');
+                    }
+                },
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'system_type' => ['nullable', 'string', 'max:100'],
+            'status' => ['required', 'string', 'max:100'],
+            'manufacturer' => ['nullable', 'string', 'max:255'],
+            'model' => ['nullable', 'string', 'max:255'],
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'hostname' => ['nullable', 'string', 'max:255'],
+            'ip_address' => ['nullable', 'string', 'max:100'],
+            'local_url' => ['nullable', 'string', 'max:255'],
+            'remote_url' => ['nullable', 'string', 'max:255'],
+            'camera_count' => ['nullable', 'integer', 'min:0'],
+            'estimated_retention_days' => ['nullable', 'integer', 'min:0'],
+            'storage_notes' => ['nullable', 'string'],
+            'access_notes' => ['nullable', 'string'],
+            'last_checked_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function authorizeNvrAccess(NvrSystem $nvrSystem): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->organization_id) {
+            abort(403, 'No organization assigned.');
+        }
+
+        if ((int) $nvrSystem->organization_id !== (int) $user->organization_id) {
+            abort(403, 'You do not have access to this NVR/VMS profile.');
+        }
+    }
+
+    private function sitesForCurrentUser()
+    {
+        return Site::where('organization_id', Auth::user()?->organization_id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+    }
+}

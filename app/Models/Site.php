@@ -5,51 +5,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Organization extends Model
+class Site extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'parent_organization_id',
+        'organization_id',
         'name',
-        'organization_type',
+        'site_type',
         'status',
         'contact_name',
         'contact_email',
         'contact_phone',
-        'website',
         'address',
         'city',
         'state',
         'postal_code',
         'country',
-        'logo_path',
+        'time_zone',
         'notes',
     ];
 
-    public function parentOrganization()
+    public function organization()
     {
-        return $this->belongsTo(Organization::class, 'parent_organization_id');
-    }
-
-    public function childOrganizations()
-    {
-        return $this->hasMany(Organization::class, 'parent_organization_id');
-    }
-
-    public function users()
-    {
-        return $this->hasMany(User::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function incidents()
     {
         return $this->hasMany(Incident::class);
-    }
-
-    public function sites()
-    {
-        return $this->hasMany(Site::class);
     }
 
     public function nvrSystems()
@@ -59,6 +43,19 @@ class Organization extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        return $this->name ?: 'Organization #' . $this->id;
+        return $this->name ?: 'Site #' . $this->id;
+    }
+
+    public function getFullAddressAttribute(): string
+    {
+        $parts = array_filter([
+            $this->address,
+            $this->city,
+            $this->state,
+            $this->postal_code,
+            $this->country,
+        ]);
+
+        return $parts ? implode(', ', $parts) : '-';
     }
 }

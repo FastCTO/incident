@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Session;
 
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IncidentFileController;
+use App\Http\Controllers\NvrSystemController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +48,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::put('/organization', [OrganizationController::class, 'update'])
         ->name('organization.update');
+
+    Route::resource('sites', SiteController::class)->except(['show']);
+
+    Route::resource('nvr-systems', NvrSystemController::class)->except(['show']);
 
     Route::post('/incidents/start', [IncidentController::class, 'start'])
         ->name('incidents.start');
