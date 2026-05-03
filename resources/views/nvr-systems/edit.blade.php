@@ -84,7 +84,7 @@
             <div>
                 <h2>Audit History</h2>
                 <p style="margin-top: -8px;">
-                    Baseline and recurring checks for this video source. These help establish the trust chain.
+                    Append-only baseline and recurring checks for this video source. These help establish the trust chain.
                 </p>
             </div>
 
@@ -116,20 +116,14 @@
                             <td>{{ $audit->ip_address ?? '-' }}</td>
                             <td>{{ $audit->estimated_retention_days ? $audit->estimated_retention_days . ' days' : '-' }}</td>
                             <td>
-                                {{ $audit->active_camera_count ?? '-' }} active
+                                {{ $audit->total_camera_count ?? '-' }} total
                                 @if(!is_null($audit->offline_camera_count))
                                     <div style="font-size: 13px; color: #4b5563;">{{ $audit->offline_camera_count }} offline</div>
                                 @endif
                             </td>
                             <td>{{ $audit->next_audit_due_at ? $audit->next_audit_due_at->format('M j, Y') : '-' }}</td>
                             <td>
-                                <a href="{{ route('video-source-audits.edit', $audit) }}">Edit</a>
-                                |
-                                <form method="POST" action="{{ route('video-source-audits.destroy', $audit) }}" style="display: inline;" onsubmit="return confirm('Delete this audit record?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="nav-button-link">Delete</button>
-                                </form>
+                                <a href="{{ route('video-source-audits.edit', $audit) }}">View</a>
                             </td>
                         </tr>
                     @endforeach

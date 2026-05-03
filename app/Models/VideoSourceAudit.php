@@ -21,6 +21,7 @@ class VideoSourceAudit extends Model
         'user_agent',
         'request_method',
         'request_path',
+
         'serial_number_observed',
         'manufacturer_observed',
         'model_observed',
@@ -30,21 +31,35 @@ class VideoSourceAudit extends Model
         'hostname_observed',
         'source_ip_observed',
         'mac_address_observed',
+        'installation_date',
+
         'system_datetime',
         'system_time_zone',
+        'ntp_enabled',
         'time_drift_notes',
+
         'total_storage',
+        'total_storage_amount',
+        'total_storage_unit',
         'used_storage',
         'available_storage',
         'storage_health',
+        'storage_status',
+
         'oldest_recording_at',
+        'oldest_recording_verified',
         'estimated_retention_days',
         'recording_mode',
+        'export_test_performed',
+        'export_test_status',
+        'export_test_notes',
+
         'total_camera_count',
         'active_camera_count',
         'offline_camera_count',
         'disabled_camera_count',
         'camera_view_notes',
+
         'admin_user_count',
         'standard_user_count',
         'unknown_user_count',
@@ -52,6 +67,11 @@ class VideoSourceAudit extends Model
         'failed_login_notes',
         'unusual_activity_notes',
         'security_notes',
+
+        'logs_reviewed',
+        'log_review_window',
+        'log_notes',
+
         'retention_notes',
         'overall_notes',
         'recommended_actions',
@@ -60,8 +80,13 @@ class VideoSourceAudit extends Model
 
     protected $casts = [
         'performed_at' => 'datetime',
+        'installation_date' => 'date',
         'system_datetime' => 'datetime',
+        'ntp_enabled' => 'boolean',
         'oldest_recording_at' => 'datetime',
+        'oldest_recording_verified' => 'boolean',
+        'export_test_performed' => 'boolean',
+        'logs_reviewed' => 'boolean',
         'next_audit_due_at' => 'datetime',
         'estimated_retention_days' => 'integer',
         'total_camera_count' => 'integer',
@@ -118,5 +143,57 @@ class VideoSourceAudit extends Model
             ?? $this->performer->name
             ?? $this->performer->email
             ?? 'User #' . $this->performed_by;
+    }
+
+    public function getNtpEnabledLabelAttribute(): string
+    {
+        if ($this->ntp_enabled === true) {
+            return 'Yes';
+        }
+
+        if ($this->ntp_enabled === false) {
+            return 'No';
+        }
+
+        return 'Unknown / Not visible';
+    }
+
+    public function getOldestRecordingVerifiedLabelAttribute(): string
+    {
+        if ($this->oldest_recording_verified === true) {
+            return 'Yes';
+        }
+
+        if ($this->oldest_recording_verified === false) {
+            return 'No';
+        }
+
+        return 'Unknown / Not checked';
+    }
+
+    public function getExportTestPerformedLabelAttribute(): string
+    {
+        if ($this->export_test_performed === true) {
+            return 'Yes';
+        }
+
+        if ($this->export_test_performed === false) {
+            return 'No';
+        }
+
+        return 'Unknown / Not checked';
+    }
+
+    public function getLogsReviewedLabelAttribute(): string
+    {
+        if ($this->logs_reviewed === true) {
+            return 'Yes';
+        }
+
+        if ($this->logs_reviewed === false) {
+            return 'No';
+        }
+
+        return 'Unknown / Not checked';
     }
 }
