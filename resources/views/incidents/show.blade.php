@@ -109,6 +109,119 @@
                     </div>
                 @endif
             </div>
+
+            <div class="card">
+                <h2>Event Timeline</h2>
+
+                <p style="margin-top: -8px;">
+                    Chain-of-custody activity for this incident, including file uploads, updates, request data, and hash metadata.
+                </p>
+
+                @if($incident->events->count())
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Actor</th>
+                                <th>Event</th>
+                                <th>Description</th>
+                                <th>IP</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($incident->events as $event)
+                                @php
+                                    $eventLabel = ucwords(str_replace('_', ' ', $event->event_type));
+                                    $metadataPretty = $event->metadata
+                                        ? json_encode($event->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+                                        : null;
+                                @endphp
+
+                                <tr>
+                                    <td style="white-space: nowrap;">
+                                        {{ $event->created_at ? $event->created_at->format('M j, Y g:i A') : '-' }}
+                                    </td>
+
+                                    <td>{{ $event->actor_display_name }}</td>
+
+                                    <td>{{ $eventLabel }}</td>
+
+                                    <td>{{ $event->description ?? '-' }}</td>
+
+                                    <td style="white-space: nowrap;">
+                                        {{ $event->ip_address ?? '-' }}
+                                    </td>
+
+                                    <td>
+                                        <details>
+                                            <summary style="cursor: pointer; color: #1d4ed8; font-weight: 600;">
+                                                Details
+                                            </summary>
+
+                                            <div style="margin-top: 10px; font-size: 13px;">
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>Event ID:</strong> {{ $event->id }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>Event Type:</strong> {{ $event->event_type }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>User ID:</strong> {{ $event->user_id ?? '-' }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>IP Address:</strong> {{ $event->ip_address ?? '-' }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>Request:</strong>
+                                                    {{ $event->request_method ?? '-' }}
+                                                    {{ $event->request_path ?? '-' }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>User Agent:</strong>
+                                                    <div style="font-family: monospace; word-break: break-all; margin-top: 4px;">
+                                                        {{ $event->user_agent ?? '-' }}
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>Created At:</strong>
+                                                    {{ $event->created_at ? $event->created_at->format('M j, Y g:i:s A') : '-' }}
+                                                </div>
+
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong>Updated At:</strong>
+                                                    {{ $event->updated_at ? $event->updated_at->format('M j, Y g:i:s A') : '-' }}
+                                                </div>
+
+                                                <div>
+                                                    <strong>Metadata:</strong>
+
+                                                    @if($metadataPretty)
+                                                        <pre style="white-space: pre-wrap; word-break: break-word; background: #f3f4f6; padding: 10px; border-radius: 6px; margin-top: 6px; font-size: 12px;">{{ $metadataPretty }}</pre>
+                                                    @else
+                                                        <div style="margin-top: 4px;">-</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <div class="empty">
+                        <h3>No timeline events yet</h3>
+                        <p>As incidents are created, updated, and files are handled, chain-of-custody events will appear here.</p>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div>
@@ -130,6 +243,20 @@
                 <p><strong>3. Incident</strong><br>Track the event and supporting details.</p>
                 <p><strong>4. Evidence</strong><br>Package clips, hashes, notes, and access history.</p>
                 <p><strong>5. Report</strong><br>Generate incident documentation.</p>
+            </div>
+
+            <div class="card">
+                <h2>Evidence Integrity Notes</h2>
+
+                <p>
+                    This incident record now tracks uploaded files, SHA-256 hashes, uploader identity,
+                    upload time, request source, and event history.
+                </p>
+
+                <p>
+                    Future integrity checks should recalculate file hashes and log pass/fail results
+                    as additional timeline events.
+                </p>
             </div>
         </div>
     </div>
