@@ -13,9 +13,13 @@
 
         <a href="{{ route('sites.index') }}">Sites</a>
 
-        <a href="{{ route('nvr-systems.index') }}">NVR/VMS</a>
+        @if(\Illuminate\Support\Facades\Route::has('nvr-systems.index'))
+            <a href="{{ route('nvr-systems.index') }}">NVR/VMS</a>
+        @endif
 
-        <a href="{{ route('organization.edit') }}">Organization</a>
+        <a href="{{ route('organizations.index') }}">Organizations</a>
+
+        <a href="{{ route('organization.edit') }}">My Organization</a>
 
         <a href="{{ route('profile.edit') }}">My Profile</a>
     </div>

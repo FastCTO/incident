@@ -10,6 +10,7 @@ use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IncidentFileController;
 use App\Http\Controllers\NvrSystemController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
 
@@ -50,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('organization.update');
 
     Route::resource('sites', SiteController::class)->except(['show']);
+
+    Route::resource('organizations', OrganizationManagementController::class)->except(['show']);
 
     Route::resource('nvr-systems', NvrSystemController::class)->except(['show']);
 

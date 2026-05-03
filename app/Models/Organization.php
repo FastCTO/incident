@@ -34,7 +34,7 @@ class Organization extends Model
 
     public function childOrganizations()
     {
-        return $this->hasMany(Organization::class, 'parent_organization_id');
+        return $this->hasMany(Organization::class, 'parent_organization_id')->orderBy('name');
     }
 
     public function users()
@@ -60,5 +60,15 @@ class Organization extends Model
     public function getDisplayNameAttribute(): string
     {
         return $this->name ?: 'Organization #' . $this->id;
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return ucwords(str_replace('_', ' ', $this->organization_type ?? 'customer'));
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return ucfirst($this->status ?? 'active');
     }
 }
