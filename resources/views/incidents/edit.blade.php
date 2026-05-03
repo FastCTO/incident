@@ -158,6 +158,8 @@
                         <th>File</th>
                         <th>Type</th>
                         <th>Size</th>
+                        <th>Uploaded At</th>
+                        <th>Uploaded By</th>
                         <th>SHA-256</th>
                         <th>Actions</th>
                     </tr>
@@ -180,6 +182,10 @@
                             <td>{{ ucfirst($file->file_type ?? 'other') }}</td>
 
                             <td>{{ $file->human_file_size }}</td>
+
+                            <td>{{ $file->created_at ? $file->created_at->format('M j, Y g:i A') : '-' }}</td>
+
+                            <td>{{ $file->uploader_display_name }}</td>
 
                             <td style="font-family: monospace; font-size: 12px; word-break: break-all;">
                                 {{ $file->sha256_hash ?? '-' }}

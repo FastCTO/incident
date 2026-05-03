@@ -85,11 +85,15 @@ class IncidentController extends Controller
 
     public function show(Incident $incident)
     {
+        $incident->load('files.uploader');
+
         return view('incidents.show', compact('incident'));
     }
 
     public function edit(Incident $incident)
     {
+        $incident->load('files.uploader');
+
         return view('incidents.edit', compact('incident'));
     }
 

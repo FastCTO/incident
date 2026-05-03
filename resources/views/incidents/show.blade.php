@@ -67,6 +67,8 @@
                                 <th>File</th>
                                 <th>Type</th>
                                 <th>Size</th>
+                                <th>Uploaded At</th>
+                                <th>Uploaded By</th>
                                 <th>SHA-256</th>
                             </tr>
                         </thead>
@@ -84,8 +86,15 @@
                                             </div>
                                         @endif
                                     </td>
+
                                     <td>{{ ucfirst($file->file_type ?? 'other') }}</td>
+
                                     <td>{{ $file->human_file_size }}</td>
+
+                                    <td>{{ $file->created_at ? $file->created_at->format('M j, Y g:i A') : '-' }}</td>
+
+                                    <td>{{ $file->uploader_display_name }}</td>
+
                                     <td style="font-family: monospace; font-size: 12px; word-break: break-all;">
                                         {{ $file->sha256_hash ?? '-' }}
                                     </td>
@@ -118,8 +127,9 @@
                 <h3>Workflow</h3>
                 <p><strong>1. Baseline</strong><br>Confirm system status.</p>
                 <p><strong>2. Monitor</strong><br>Review footage and retention.</p>
-                <p><strong>3. Evidence</strong><br>Package clips, hashes, notes, and access history.</p>
-                <p><strong>4. Report</strong><br>Generate incident documentation.</p>
+                <p><strong>3. Incident</strong><br>Track the event and supporting details.</p>
+                <p><strong>4. Evidence</strong><br>Package clips, hashes, notes, and access history.</p>
+                <p><strong>5. Report</strong><br>Generate incident documentation.</p>
             </div>
         </div>
     </div>

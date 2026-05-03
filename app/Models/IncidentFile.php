@@ -28,6 +28,11 @@ class IncidentFile extends Model
         return $this->belongsTo(Incident::class);
     }
 
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
     public function getUrlAttribute(): string
     {
         return Storage::disk('public')->url($this->file_path);
@@ -47,5 +52,16 @@ class IncidentFile extends Model
         }
 
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+
+    public function getUploaderDisplayNameAttribute(): string
+    {
+        if (!$this->uploader) {
+            return 'Unknown user';
+        }
+
+        return $this->uploader->name
+            ?? $this->uploader->email
+            ?? 'User #' . $this->uploaded_by;
     }
 }
