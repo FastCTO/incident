@@ -18,6 +18,17 @@
         <div class="success">{{ session('success') }}</div>
     @endif
 
+    @if($incident->archived_at)
+        <div class="notice" style="margin-bottom: 20px;">
+            <strong>Archived Incident:</strong>
+            This incident was archived on {{ $incident->archived_at->format('M j, Y g:i A') }}.
+
+            @if($incident->archivedBy)
+                Archived by {{ $incident->archivedBy->name ?? $incident->archivedBy->email }}.
+            @endif
+        </div>
+    @endif
+
     <div class="detail-grid">
         <div>
             <div class="card">
@@ -228,8 +239,27 @@
             <div class="card">
                 <h2>Actions</h2>
 
-                <p><a href="{{ route('incidents.edit', $incident) }}" class="btn">Edit Incident</a></p>
-                <p><a href="{{ route('incidents.index') }}" class="btn btn-secondary">Back to Incidents</a></p>
+                @if(!$incident->archived_at)
+                    <p><a href="{{ route('incidents.edit', $incident) }}" class="btn">Edit Incident</a></p>
+
+                    <form
+                        method="POST"
+                        action="{{ route('incidents.destroy', $incident) }}"
+                        onsubmit="return confirm('Archive this incident? It will be hidden from the active incident list but retained for evidence history.');"
+                        style="margin-bottom: 16px;"
+                    >
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-secondary">Archive Incident</button>
+                    </form>
+                @else
+                    <div class="notice">
+                        This incident is archived. Editing is disabled for now.
+                    </div>
+                @endif
+
+                <p><a href="{{ route('incidents.index') }}" class="btn btn-secondary">Back to Active Incidents</a></p>
+                <p><a href="{{ route('incidents.index', ['archived' => 1]) }}" class="btn btn-secondary">View Archived Incidents</a></p>
 
                 <div class="notice">
                     View mode is read-only. Uploads and file removal happen from Edit Incident.

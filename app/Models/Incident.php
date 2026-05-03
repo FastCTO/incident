@@ -19,10 +19,13 @@ class Incident extends Model
         'summary',
         'notes',
         'created_by',
+        'archived_at',
+        'archived_by',
     ];
 
     protected $casts = [
         'incident_datetime' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function files()
@@ -33,5 +36,15 @@ class Incident extends Model
     public function events()
     {
         return $this->hasMany(IncidentEvent::class)->latest();
+    }
+
+    public function archivedBy()
+    {
+        return $this->belongsTo(User::class, 'archived_by');
+    }
+
+    public function getIsArchivedAttribute(): bool
+    {
+        return !is_null($this->archived_at);
     }
 }

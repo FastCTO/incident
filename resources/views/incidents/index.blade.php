@@ -18,6 +18,7 @@
             return '<a class="sort-link" href="' . route('incidents.index', [
                 'sort' => $column,
                 'direction' => $nextDirection,
+                'archived' => request()->boolean('archived') ? 1 : 0,
             ]) . '">' . e($label . $arrow) . '</a>';
         }
     @endphp
@@ -42,16 +43,24 @@
     <div class="card">
         <div class="header-row" style="margin-bottom: 20px;">
             <div>
-                <h2>Incidents</h2>
+                <h2>{{ $showArchived ? 'Archived Incidents' : 'Active Incidents' }}</h2>
                 <p style="margin-top: -8px;">
-                    Default sort is newest incident first. Click a column header to sort.
+                    {{ $showArchived ? 'Archived incidents are hidden from the active list.' : 'Default sort is newest incident first. Click a column header to sort.' }}
                 </p>
             </div>
 
-            <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
-                @csrf
-                <button type="submit" class="btn">Start New Incident</button>
-            </form>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                @if($showArchived)
+                    <a href="{{ route('incidents.index') }}" class="btn btn-secondary">View Active</a>
+                @else
+                    <a href="{{ route('incidents.index', ['archived' => 1]) }}" class="btn btn-secondary">View Archived</a>
+
+                    <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="btn">Start New Incident</button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         @if($incidents->count())
@@ -64,6 +73,9 @@
                         <th>{!! sort_link('Status', 'status', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Location', 'location', $sort, $direction) !!}</th>
                         <th>{!! sort_link('Date/Time', 'datetime', $sort, $direction) !!}</th>
+                        @if($showArchived)
+                            <th>{!! sort_link('Archived', 'archived', $sort, $direction) !!}</th>
+                        @endif
                         <th>Evidence</th>
                         <th>Actions</th>
                     </tr>
@@ -85,11 +97,19 @@
                             <td>{{ ucfirst(str_replace('_', ' ', $incident->status)) }}</td>
                             <td>{{ $incident->location_name ?? '-' }}</td>
                             <td>{{ $incident->incident_datetime ? $incident->incident_datetime->format('M j, Y g:i A') : '-' }}</td>
+
+                            @if($showArchived)
+                                <td>{{ $incident->archived_at ? $incident->archived_at->format('M j, Y g:i A') : '-' }}</td>
+                            @endif
+
                             <td>{{ $incident->files_count ?? 0 }}</td>
                             <td>
                                 <a href="{{ route('incidents.show', $incident) }}">View</a>
-                                |
-                                <a href="{{ route('incidents.edit', $incident) }}">Edit</a>
+
+                                @if(!$incident->archived_at)
+                                    |
+                                    <a href="{{ route('incidents.edit', $incident) }}">Edit</a>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -101,13 +121,18 @@
             </div>
         @else
             <div class="empty">
-                <h3>No incidents yet</h3>
-                <p>Start the first incident to begin building the evidence workflow.</p>
+                @if($showArchived)
+                    <h3>No archived incidents</h3>
+                    <p>Archived incidents will appear here.</p>
+                @else
+                    <h3>No active incidents yet</h3>
+                    <p>Start the first incident to begin building the evidence workflow.</p>
 
-                <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
-                    @csrf
-                    <button type="submit" class="btn">Start New Incident</button>
-                </form>
+                    <form method="POST" action="{{ route('incidents.start') }}" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="btn">Start New Incident</button>
+                    </form>
+                @endif
             </div>
         @endif
     </div>

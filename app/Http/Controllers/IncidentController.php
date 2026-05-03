@@ -19,10 +19,12 @@ class IncidentController extends Controller
             'location' => 'location_name',
             'datetime' => 'incident_datetime',
             'created' => 'created_at',
+            'archived' => 'archived_at',
         ];
 
         $sort = $request->query('sort', 'datetime');
         $direction = $request->query('direction', 'desc');
+        $showArchived = $request->boolean('archived');
 
         if (!array_key_exists($sort, $allowedSorts)) {
             $sort = 'datetime';
@@ -34,13 +36,21 @@ class IncidentController extends Controller
 
         $sortColumn = $allowedSorts[$sort];
 
-        $incidents = Incident::withCount('files')
+        $incidentQuery = Incident::withCount('files');
+
+        if ($showArchived) {
+            $incidentQuery->whereNotNull('archived_at');
+        } else {
+            $incidentQuery->whereNull('archived_at');
+        }
+
+        $incidents = $incidentQuery
             ->orderBy($sortColumn, $direction)
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();
 
-        return view('incidents.index', compact('incidents', 'sort', 'direction'));
+        return view('incidents.index', compact('incidents', 'sort', 'direction', 'showArchived'));
     }
 
     public function create()
@@ -111,6 +121,7 @@ class IncidentController extends Controller
         $incident->load([
             'files.uploader',
             'events.actor',
+            'archivedBy',
         ]);
 
         return view('incidents.show', compact('incident'));
@@ -182,21 +193,32 @@ class IncidentController extends Controller
 
     public function destroy(Incident $incident)
     {
+        if ($incident->archived_at) {
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Incident is already archived.');
+        }
+
+        $incident->update([
+            'archived_at' => now(),
+            'archived_by' => Auth::id(),
+        ]);
+
         $this->logIncidentEvent(
             $incident,
-            'incident_deleted',
-            'Incident #' . $incident->id . ' was deleted.',
+            'incident_archived',
+            'Incident #' . $incident->id . ' was archived.',
             [
                 'title' => $incident->title,
                 'status' => $incident->status,
+                'archived_by' => Auth::id(),
+                'archived_at' => $incident->archived_at?->toDateTimeString(),
             ]
         );
 
-        $incident->delete();
-
         return redirect()
             ->route('incidents.index')
-            ->with('success', 'Incident deleted successfully.');
+            ->with('success', 'Incident archived successfully.');
     }
 
     private function validateIncident(Request $request): array
