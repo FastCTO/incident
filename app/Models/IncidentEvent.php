@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class IncidentEvent extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'incident_id',
+        'user_id',
+        'event_type',
+        'description',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+    ];
+
+    public function incident()
+    {
+        return $this->belongsTo(Incident::class);
+    }
+
+    public function actor()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function getActorDisplayNameAttribute(): string
+    {
+        if (!$this->actor) {
+            return 'System / Unknown user';
+        }
+
+        return $this->actor->name
+            ?? $this->actor->email
+            ?? 'User #' . $this->user_id;
+    }
+}

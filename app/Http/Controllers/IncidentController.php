@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\IncidentEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -65,6 +66,17 @@ class IncidentController extends Controller
             'title' => 'Incident #' . $incident->id . ' - ',
         ]);
 
+        $this->logIncidentEvent(
+            $incident,
+            'incident_created',
+            'Incident #' . $incident->id . ' was started.',
+            [
+                'title' => $incident->title,
+                'status' => $incident->status,
+                'created_by' => Auth::id(),
+            ]
+        );
+
         return redirect()
             ->route('incidents.edit', $incident)
             ->with('success', 'New incident started. Add details and upload files below.');
@@ -77,6 +89,17 @@ class IncidentController extends Controller
         $validated['created_by'] = Auth::id();
 
         $incident = Incident::create($validated);
+
+        $this->logIncidentEvent(
+            $incident,
+            'incident_created',
+            'Incident #' . $incident->id . ' was created.',
+            [
+                'title' => $incident->title,
+                'status' => $incident->status,
+                'created_by' => Auth::id(),
+            ]
+        );
 
         return redirect()
             ->route('incidents.edit', $incident)
@@ -101,7 +124,51 @@ class IncidentController extends Controller
     {
         $validated = $this->validateIncident($request);
 
+        $before = $incident->only([
+            'title',
+            'incident_type',
+            'status',
+            'location_name',
+            'address',
+            'incident_datetime',
+            'summary',
+            'notes',
+        ]);
+
         $incident->update($validated);
+
+        $after = $incident->fresh()->only([
+            'title',
+            'incident_type',
+            'status',
+            'location_name',
+            'address',
+            'incident_datetime',
+            'summary',
+            'notes',
+        ]);
+
+        $changedFields = [];
+
+        foreach ($after as $field => $newValue) {
+            $oldValue = $before[$field] ?? null;
+
+            if ((string) $oldValue !== (string) $newValue) {
+                $changedFields[$field] = [
+                    'before' => $oldValue,
+                    'after' => $newValue,
+                ];
+            }
+        }
+
+        $this->logIncidentEvent(
+            $incident,
+            'incident_updated',
+            'Incident #' . $incident->id . ' was updated.',
+            [
+                'changed_fields' => $changedFields,
+            ]
+        );
 
         return redirect()
             ->route('incidents.edit', $incident)
@@ -128,6 +195,17 @@ class IncidentController extends Controller
             'incident_datetime' => ['nullable', 'date'],
             'summary' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
+    {
+        IncidentEvent::create([
+            'incident_id' => $incident->id,
+            'user_id' => Auth::id(),
+            'event_type' => $eventType,
+            'description' => $description,
+            'metadata' => $metadata,
         ]);
     }
 }

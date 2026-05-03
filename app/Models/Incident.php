@@ -29,4 +29,9 @@ class Incident extends Model
     {
         return $this->hasMany(IncidentFile::class)->latest();
     }
+
+    public function events()
+    {
+        return $this->hasMany(IncidentEvent::class)->latest();
+    }
 }

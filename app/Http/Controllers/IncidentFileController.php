@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\IncidentEvent;
 use App\Models\IncidentFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,15 @@ class IncidentFileController extends Controller
                 'summary' => $incidentData['incident_summary'] ?? null,
                 'notes' => $incidentData['incident_notes'] ?? null,
             ]);
+
+            $this->logIncidentEvent(
+                $incident,
+                'incident_updated',
+                'Incident #' . $incident->id . ' was updated during file upload.',
+                [
+                    'source' => 'file_upload_form',
+                ]
+            );
         }
 
         $validated = $request->validate([
@@ -77,7 +87,7 @@ class IncidentFileController extends Controller
 
         $fileType = $this->detectFileType($mimeType, $extension);
 
-        IncidentFile::create([
+        $incidentFile = IncidentFile::create([
             'incident_id' => $incident->id,
             'uploaded_by' => Auth::id(),
             'original_filename' => $originalFilename,
@@ -90,6 +100,22 @@ class IncidentFileController extends Controller
             'notes' => $request->input('notes'),
         ]);
 
+        $this->logIncidentEvent(
+            $incident,
+            'file_uploaded',
+            'File uploaded: ' . $incidentFile->original_filename,
+            [
+                'incident_file_id' => $incidentFile->id,
+                'original_filename' => $incidentFile->original_filename,
+                'stored_filename' => $incidentFile->stored_filename,
+                'file_path' => $incidentFile->file_path,
+                'mime_type' => $incidentFile->mime_type,
+                'file_size' => $incidentFile->file_size,
+                'file_type' => $incidentFile->file_type,
+                'sha256_hash' => $incidentFile->sha256_hash,
+            ]
+        );
+
         return redirect()
             ->route('incidents.edit', $incident)
             ->with('success', 'Incident updated, file uploaded, and file hash created successfully.');
@@ -101,9 +127,27 @@ class IncidentFileController extends Controller
             abort(404);
         }
 
+        $fileMetadata = [
+            'incident_file_id' => $file->id,
+            'original_filename' => $file->original_filename,
+            'stored_filename' => $file->stored_filename,
+            'file_path' => $file->file_path,
+            'mime_type' => $file->mime_type,
+            'file_size' => $file->file_size,
+            'file_type' => $file->file_type,
+            'sha256_hash' => $file->sha256_hash,
+        ];
+
         Storage::disk('public')->delete($file->file_path);
 
         $file->delete();
+
+        $this->logIncidentEvent(
+            $incident,
+            'file_removed',
+            'File removed: ' . ($fileMetadata['original_filename'] ?? 'Unknown file'),
+            $fileMetadata
+        );
 
         return redirect()
             ->route('incidents.edit', $incident)
@@ -136,5 +180,16 @@ class IncidentFileController extends Controller
         }
 
         return 'other';
+    }
+
+    private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
+    {
+        IncidentEvent::create([
+            'incident_id' => $incident->id,
+            'user_id' => Auth::id(),
+            'event_type' => $eventType,
+            'description' => $description,
+            'metadata' => $metadata,
+        ]);
     }
 }
