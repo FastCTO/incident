@@ -4,6 +4,46 @@
 
 @section('content')
     <style>
+        .site-dashboard {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(110px, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .dash-pill {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+            background: #f9fafb;
+            min-height: 62px;
+        }
+
+        .dash-pill .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #6b7280;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .dash-pill .value {
+            font-size: 20px;
+            color: #111827;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .dash-pill a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .dash-pill a:hover {
+            text-decoration: underline;
+        }
+
         .compact-table th,
         .compact-table td {
             vertical-align: top;
@@ -88,16 +128,80 @@
         .address-link:hover {
             text-decoration: underline;
         }
+
+        @media (max-width: 1100px) {
+            .site-dashboard {
+                grid-template-columns: repeat(3, minmax(110px, 1fr));
+            }
+        }
+
+        @media (max-width: 650px) {
+            .site-dashboard {
+                grid-template-columns: repeat(2, minmax(110px, 1fr));
+            }
+        }
     </style>
 
     <div class="card">
         <div class="header-row">
             <div>
-                <h1>Sites</h1>
+                <h1>All Accessible Sites</h1>
                 <p>
-                    Customer locations, buildings, stores, campuses, and facilities.
-                    Incidents, video sources, cameras, and evidence attach here.
+                    Sites are physical customer facilities or locations. A site can contain video sources,
+                    cameras, incidents, evidence files, audits, and related activity.
                 </p>
+
+                <div class="site-dashboard">
+                    <div class="dash-pill">
+                        <div class="label">Customers</div>
+                        <div class="value">
+                            <a href="{{ route('organizations.index', ['type' => 'customer']) }}" title="View customer organizations">
+                                {{ $summary['customers'] ?? 0 }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dash-pill">
+                        <div class="label">Sites</div>
+                        <div class="value">
+                            <a href="{{ route('sites.index') }}" title="View all accessible sites">
+                                {{ $summary['sites'] ?? 0 }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dash-pill">
+                        <div class="label">Video Sources</div>
+                        <div class="value">
+                            <a href="{{ route('nvr-systems.index') }}" title="View video sources">
+                                {{ $summary['video_sources'] ?? 0 }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dash-pill">
+                        <div class="label">Incidents</div>
+                        <div class="value">
+                            <a href="{{ route('incidents.index') }}" title="View incidents">
+                                {{ $summary['incidents'] ?? 0 }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dash-pill">
+                        <div class="label">Cameras</div>
+                        <div class="value">{{ $summary['cameras'] ?? 0 }}</div>
+                    </div>
+
+                    <div class="dash-pill">
+                        <div class="label">Need Audit</div>
+                        <div class="value">
+                            <a href="{{ route('nvr-systems.index', ['needs_audit' => 1]) }}" title="Video sources needing audit">
+                                {{ $summary['needs_audit'] ?? 0 }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">

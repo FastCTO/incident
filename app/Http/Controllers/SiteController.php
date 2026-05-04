@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Incident;
+use App\Models\NvrSystem;
 use App\Models\Organization;
 use App\Models\Site;
 use Illuminate\Http\Request;
@@ -23,10 +25,36 @@ class SiteController extends Controller
         $organization = $this->currentOrganization();
         $showOrganizationColumn = count($organizationIds) > 1;
 
+        $summary = [
+            'customers' => Organization::whereIn('id', $organizationIds)
+                ->whereIn('organization_type', ['customer', 'site_account'])
+                ->count(),
+
+            'sites' => Site::whereIn('organization_id', $organizationIds)
+                ->count(),
+
+            'video_sources' => NvrSystem::whereIn('organization_id', $organizationIds)
+                ->count(),
+
+            'incidents' => Incident::whereIn('organization_id', $organizationIds)
+                ->count(),
+
+            'cameras' => (int) NvrSystem::whereIn('organization_id', $organizationIds)
+                ->sum('camera_count'),
+
+            'needs_audit' => NvrSystem::whereIn('organization_id', $organizationIds)
+                ->where(function ($query) {
+                    $query->whereNull('last_checked_at')
+                        ->orWhere('last_checked_at', '<', now()->subDays(90));
+                })
+                ->count(),
+        ];
+
         return view('sites.index', compact(
             'sites',
             'organization',
-            'showOrganizationColumn'
+            'showOrganizationColumn',
+            'summary'
         ));
     }
 
