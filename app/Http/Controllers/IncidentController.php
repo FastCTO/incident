@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentEvent;
+use App\Models\Organization;
 use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,14 +37,10 @@ class IncidentController extends Controller
         }
 
         $sortColumn = $allowedSorts[$sort];
-        $user = Auth::user();
 
         $incidentQuery = Incident::with(['organization', 'site'])
-            ->withCount('files');
-
-        if ($user && $user->organization_id) {
-            $incidentQuery->where('organization_id', $user->organization_id);
-        }
+            ->withCount('files')
+            ->whereIn('organization_id', $this->visibleOrganizationIds());
 
         if ($showArchived) {
             $incidentQuery->whereNotNull('archived_at');
@@ -62,16 +59,20 @@ class IncidentController extends Controller
 
     public function create()
     {
-        return view('incidents.create');
+        $sites = $this->sitesForCurrentUser();
+
+        return view('incidents.create', compact('sites'));
     }
 
     public function start()
     {
         $user = Auth::user();
+        $siteId = $this->defaultSiteIdForCurrentUser();
+        $organizationId = $this->organizationIdForSite($siteId) ?? $user?->organization_id;
 
         $incident = Incident::create([
-            'organization_id' => $user?->organization_id,
-            'site_id' => $this->defaultSiteIdForCurrentUser(),
+            'organization_id' => $organizationId,
+            'site_id' => $siteId,
             'title' => 'Starting new incident...',
             'incident_type' => null,
             'status' => 'open',
@@ -109,12 +110,14 @@ class IncidentController extends Controller
     {
         $validated = $this->validateIncident($request);
 
-        $validated['organization_id'] = Auth::user()?->organization_id;
         $validated['created_by'] = Auth::id();
 
         if (empty($validated['site_id'])) {
             $validated['site_id'] = $this->defaultSiteIdForCurrentUser();
         }
+
+        $validated['organization_id'] = $this->organizationIdForSite($validated['site_id'] ?? null)
+            ?? Auth::user()?->organization_id;
 
         $incident = Incident::create($validated);
 
@@ -184,7 +187,13 @@ class IncidentController extends Controller
 
         $validated = $this->validateIncident($request);
 
+        if (!empty($validated['site_id'])) {
+            $validated['organization_id'] = $this->organizationIdForSite($validated['site_id'])
+                ?? $incident->organization_id;
+        }
+
         $before = $incident->only([
+            'organization_id',
             'site_id',
             'title',
             'incident_type',
@@ -201,6 +210,7 @@ class IncidentController extends Controller
         $afterIncident = $incident->fresh();
 
         $after = $afterIncident->only([
+            'organization_id',
             'site_id',
             'title',
             'incident_type',
@@ -313,23 +323,21 @@ class IncidentController extends Controller
 
     private function validateIncident(Request $request): array
     {
-        $user = Auth::user();
-
         return $request->validate([
             'site_id' => [
                 'nullable',
                 'integer',
-                function ($attribute, $value, $fail) use ($user) {
+                function ($attribute, $value, $fail) {
                     if (!$value) {
                         return;
                     }
 
                     $siteExists = Site::where('id', $value)
-                        ->where('organization_id', $user?->organization_id)
+                        ->whereIn('organization_id', $this->visibleOrganizationIds())
                         ->exists();
 
                     if (!$siteExists) {
-                        $fail('The selected site is not valid for your organization.');
+                        $fail('The selected site is not valid for your access level.');
                     }
                 },
             ],
@@ -346,22 +354,63 @@ class IncidentController extends Controller
 
     private function authorizeIncidentAccess(Incident $incident): void
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->organization_id) {
-            return;
-        }
-
-        if ((int) $incident->organization_id !== (int) $user->organization_id) {
+        if (!in_array((int) $incident->organization_id, $this->visibleOrganizationIds(), true)) {
             abort(403, 'You do not have access to this incident.');
         }
     }
 
+    private function currentOrganization(): ?Organization
+    {
+        $organizationId = Auth::user()?->organization_id;
+
+        if (!$organizationId) {
+            return null;
+        }
+
+        return Organization::find($organizationId);
+    }
+
+    private function currentUserIsPlatformOwner(): bool
+    {
+        return $this->currentOrganization()?->organization_type === 'platform_owner';
+    }
+
+    private function currentUserIsMasterAccount(): bool
+    {
+        $type = $this->currentOrganization()?->organization_type;
+
+        return in_array($type, ['master_account', 'channel_partner'], true);
+    }
+
+    private function visibleOrganizationIds(): array
+    {
+        $organization = $this->currentOrganization();
+
+        if (!$organization) {
+            return [];
+        }
+
+        if ($this->currentUserIsPlatformOwner()) {
+            return Organization::pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        if ($this->currentUserIsMasterAccount()) {
+            return Organization::where('id', $organization->id)
+                ->orWhere('parent_organization_id', $organization->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        return [(int) $organization->id];
+    }
+
     private function sitesForCurrentUser()
     {
-        $user = Auth::user();
-
-        return Site::where('organization_id', $user?->organization_id)
+        return Site::with('organization')
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -369,16 +418,21 @@ class IncidentController extends Controller
 
     private function defaultSiteIdForCurrentUser(): ?int
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->organization_id) {
-            return null;
-        }
-
-        return Site::where('organization_id', $user->organization_id)
+        return Site::whereIn('organization_id', $this->visibleOrganizationIds())
             ->where('status', 'active')
             ->orderBy('id')
             ->value('id');
+    }
+
+    private function organizationIdForSite(?int $siteId): ?int
+    {
+        if (!$siteId) {
+            return null;
+        }
+
+        return Site::where('id', $siteId)
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
+            ->value('organization_id');
     }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
