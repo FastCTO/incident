@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Incident;
 use App\Models\IncidentEvent;
 use App\Models\IncidentFile;
+use App\Models\Organization;
 use App\Models\Site;
+use App\Support\OrganizationAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -37,11 +39,11 @@ class IncidentFileController extends Controller
                     }
 
                     $siteExists = Site::where('id', $value)
-                        ->where('organization_id', Auth::user()?->organization_id)
+                        ->whereIn('organization_id', $this->visibleOrganizationIds())
                         ->exists();
 
                     if (!$siteExists) {
-                        $fail('The selected site is not valid for your organization.');
+                        $fail('The selected site is not valid for your access level.');
                     }
                 },
             ],
@@ -56,8 +58,12 @@ class IncidentFileController extends Controller
         ]);
 
         if (!empty($incidentData['incident_title'])) {
+            $newSiteId = $incidentData['incident_site_id'] ?? null;
+            $newOrganizationId = $this->organizationIdForSite($newSiteId) ?? $incident->organization_id;
+
             $incident->update([
-                'site_id' => $incidentData['incident_site_id'] ?? null,
+                'organization_id' => $newOrganizationId,
+                'site_id' => $newSiteId,
                 'title' => $incidentData['incident_title'],
                 'incident_type' => $incidentData['incident_type'] ?? null,
                 'status' => $incidentData['incident_status'] ?? $incident->status,
@@ -162,7 +168,7 @@ class IncidentFileController extends Controller
                 ->with('success', 'Archived incident files cannot be removed. Restore the incident first.');
         }
 
-        if ($file->incident_id !== $incident->id) {
+        if ((int) $file->incident_id !== (int) $incident->id) {
             abort(404);
         }
 
@@ -225,15 +231,68 @@ class IncidentFileController extends Controller
 
     private function authorizeIncidentAccess(Incident $incident): void
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->organization_id) {
-            return;
-        }
-
-        if ((int) $incident->organization_id !== (int) $user->organization_id) {
+        if (!in_array((int) $incident->organization_id, $this->visibleOrganizationIds(), true)) {
             abort(403, 'You do not have access to this incident.');
         }
+    }
+
+    private function currentOrganization(): ?Organization
+    {
+        $organizationId = Auth::user()?->organization_id;
+
+        if (!$organizationId) {
+            return null;
+        }
+
+        return Organization::find($organizationId);
+    }
+
+    private function currentUserIsPlatformOwner(): bool
+    {
+        return $this->currentOrganization()?->organization_type === 'platform_owner';
+    }
+
+    private function currentUserIsMasterAccount(): bool
+    {
+        $type = $this->currentOrganization()?->organization_type;
+
+        return in_array($type, ['master_account', 'channel_partner'], true);
+    }
+
+    private function visibleOrganizationIds(): array
+    {
+        $organization = $this->currentOrganization();
+
+        if (!$organization) {
+            return [];
+        }
+
+        if ($this->currentUserIsPlatformOwner()) {
+            return Organization::pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        if ($this->currentUserIsMasterAccount()) {
+            return Organization::where('id', $organization->id)
+                ->orWhere('parent_organization_id', $organization->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        }
+
+        return [(int) $organization->id];
+    }
+
+    private function organizationIdForSite(?int $siteId): ?int
+    {
+        if (!$siteId) {
+            return null;
+        }
+
+        return Site::where('id', $siteId)
+            ->whereIn('organization_id', $this->visibleOrganizationIds())
+            ->value('organization_id');
     }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void

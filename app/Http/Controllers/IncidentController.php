@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentEvent;
-use App\Models\Organization;
 use App\Models\Site;
+use App\Support\OrganizationAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,7 +40,7 @@ class IncidentController extends Controller
 
         $incidentQuery = Incident::with(['organization', 'site'])
             ->withCount('files')
-            ->whereIn('organization_id', $this->visibleOrganizationIds());
+            ->whereIn('organization_id', OrganizationAccess::visibleOrganizationIds());
 
         if ($showArchived) {
             $incidentQuery->whereNotNull('archived_at');
@@ -59,7 +59,7 @@ class IncidentController extends Controller
 
     public function create()
     {
-        $sites = $this->sitesForCurrentUser();
+        $sites = OrganizationAccess::activeSitesForCurrentUser();
 
         return view('incidents.create', compact('sites'));
     }
@@ -67,8 +67,8 @@ class IncidentController extends Controller
     public function start()
     {
         $user = Auth::user();
-        $siteId = $this->defaultSiteIdForCurrentUser();
-        $organizationId = $this->organizationIdForSite($siteId) ?? $user?->organization_id;
+        $siteId = OrganizationAccess::defaultSiteIdForCurrentUser();
+        $organizationId = OrganizationAccess::organizationIdForSite($siteId) ?? $user?->organization_id;
 
         $incident = Incident::create([
             'organization_id' => $organizationId,
@@ -113,10 +113,10 @@ class IncidentController extends Controller
         $validated['created_by'] = Auth::id();
 
         if (empty($validated['site_id'])) {
-            $validated['site_id'] = $this->defaultSiteIdForCurrentUser();
+            $validated['site_id'] = OrganizationAccess::defaultSiteIdForCurrentUser();
         }
 
-        $validated['organization_id'] = $this->organizationIdForSite($validated['site_id'] ?? null)
+        $validated['organization_id'] = OrganizationAccess::organizationIdForSite($validated['site_id'] ?? null)
             ?? Auth::user()?->organization_id;
 
         $incident = Incident::create($validated);
@@ -170,7 +170,7 @@ class IncidentController extends Controller
             'files.uploader',
         ]);
 
-        $sites = $this->sitesForCurrentUser();
+        $sites = OrganizationAccess::activeSitesForCurrentUser();
 
         return view('incidents.edit', compact('incident', 'sites'));
     }
@@ -188,7 +188,7 @@ class IncidentController extends Controller
         $validated = $this->validateIncident($request);
 
         if (!empty($validated['site_id'])) {
-            $validated['organization_id'] = $this->organizationIdForSite($validated['site_id'])
+            $validated['organization_id'] = OrganizationAccess::organizationIdForSite($validated['site_id'])
                 ?? $incident->organization_id;
         }
 
@@ -332,11 +332,7 @@ class IncidentController extends Controller
                         return;
                     }
 
-                    $siteExists = Site::where('id', $value)
-                        ->whereIn('organization_id', $this->visibleOrganizationIds())
-                        ->exists();
-
-                    if (!$siteExists) {
+                    if (!OrganizationAccess::canAccessSite((int) $value)) {
                         $fail('The selected site is not valid for your access level.');
                     }
                 },
@@ -354,86 +350,15 @@ class IncidentController extends Controller
 
     private function authorizeIncidentAccess(Incident $incident): void
     {
-        if (!in_array((int) $incident->organization_id, $this->visibleOrganizationIds(), true)) {
-            abort(403, 'You do not have access to this incident.');
-        }
+        OrganizationAccess::authorizeOrganization(
+            $incident->organization_id,
+            'You do not have access to this incident.'
+        );
     }
 
-    private function currentOrganization(): ?Organization
-    {
-        $organizationId = Auth::user()?->organization_id;
 
-        if (!$organizationId) {
-            return null;
-        }
 
-        return Organization::find($organizationId);
-    }
 
-    private function currentUserIsPlatformOwner(): bool
-    {
-        return $this->currentOrganization()?->organization_type === 'platform_owner';
-    }
-
-    private function currentUserIsMasterAccount(): bool
-    {
-        $type = $this->currentOrganization()?->organization_type;
-
-        return in_array($type, ['master_account', 'channel_partner'], true);
-    }
-
-    private function visibleOrganizationIds(): array
-    {
-        $organization = $this->currentOrganization();
-
-        if (!$organization) {
-            return [];
-        }
-
-        if ($this->currentUserIsPlatformOwner()) {
-            return Organization::pluck('id')
-                ->map(fn ($id) => (int) $id)
-                ->toArray();
-        }
-
-        if ($this->currentUserIsMasterAccount()) {
-            return Organization::where('id', $organization->id)
-                ->orWhere('parent_organization_id', $organization->id)
-                ->pluck('id')
-                ->map(fn ($id) => (int) $id)
-                ->toArray();
-        }
-
-        return [(int) $organization->id];
-    }
-
-    private function sitesForCurrentUser()
-    {
-        return Site::with('organization')
-            ->whereIn('organization_id', $this->visibleOrganizationIds())
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-    }
-
-    private function defaultSiteIdForCurrentUser(): ?int
-    {
-        return Site::whereIn('organization_id', $this->visibleOrganizationIds())
-            ->where('status', 'active')
-            ->orderBy('id')
-            ->value('id');
-    }
-
-    private function organizationIdForSite(?int $siteId): ?int
-    {
-        if (!$siteId) {
-            return null;
-        }
-
-        return Site::where('id', $siteId)
-            ->whereIn('organization_id', $this->visibleOrganizationIds())
-            ->value('organization_id');
-    }
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
     {
