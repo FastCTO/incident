@@ -14,13 +14,20 @@ class SiteController extends Controller
         $organizationIds = $this->visibleOrganizationIds();
 
         $sites = Site::with('organization')
+            ->withCount(['nvrSystems', 'incidents'])
             ->whereIn('organization_id', $organizationIds)
+            ->orderBy('organization_id')
             ->orderBy('name')
             ->paginate(20);
 
         $organization = $this->currentOrganization();
+        $showOrganizationColumn = count($organizationIds) > 1;
 
-        return view('sites.index', compact('sites', 'organization'));
+        return view('sites.index', compact(
+            'sites',
+            'organization',
+            'showOrganizationColumn'
+        ));
     }
 
     public function create()
@@ -136,7 +143,10 @@ class SiteController extends Controller
 
     private function currentUserIsChannelPartner(): bool
     {
-        return $this->currentOrganization()?->organization_type === 'channel_partner';
+        return in_array($this->currentOrganization()?->organization_type, [
+            'channel_partner',
+            'master_account',
+        ], true);
     }
 
     private function visibleOrganizationIds(): array
@@ -167,7 +177,7 @@ class SiteController extends Controller
     private function availableOrganizationsForSiteAssignment()
     {
         return Organization::whereIn('id', $this->visibleOrganizationIds())
-            ->orderByRaw("FIELD(organization_type, 'platform_owner', 'channel_partner', 'customer', 'site_account')")
+            ->orderByRaw("FIELD(organization_type, 'platform_owner', 'master_account', 'channel_partner', 'customer', 'site_account')")
             ->orderBy('name')
             ->get();
     }
