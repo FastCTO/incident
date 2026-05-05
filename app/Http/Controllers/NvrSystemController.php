@@ -10,14 +10,82 @@ use Illuminate\Support\Facades\Auth;
 
 class NvrSystemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $nvrSystems = NvrSystem::with(['site', 'organization'])
-            ->whereIn('organization_id', $this->visibleOrganizationIds())
-            ->orderBy('name')
-            ->paginate(20);
+        $organizationIds = $this->visibleOrganizationIds();
 
-        return view('nvr-systems.index', compact('nvrSystems'));
+        $organizationId = $request->query('organization_id');
+        $siteId = $request->query('site_id');
+        $needsAudit = $request->boolean('needs_audit');
+
+        $baseQuery = NvrSystem::query()
+            ->whereIn('organization_id', $organizationIds);
+
+        if ($organizationId && in_array((int) $organizationId, $organizationIds, true)) {
+            $baseQuery->where('organization_id', (int) $organizationId);
+        }
+
+        if ($siteId) {
+            $siteAllowed = Site::where('id', (int) $siteId)
+                ->whereIn('organization_id', $organizationIds)
+                ->exists();
+
+            if ($siteAllowed) {
+                $baseQuery->where('site_id', (int) $siteId);
+            }
+        }
+
+        if ($needsAudit) {
+            $baseQuery->where(function ($query) {
+                $query->whereNull('last_checked_at')
+                    ->orWhere('last_checked_at', '<', now()->subDays(90));
+            });
+        }
+
+        $summaryBase = clone $baseQuery;
+
+        $summary = [
+            'video_sources' => (clone $summaryBase)->count(),
+
+            'sites_with_video' => (clone $summaryBase)
+                ->whereNotNull('site_id')
+                ->distinct('site_id')
+                ->count('site_id'),
+
+            'cameras' => (int) (clone $summaryBase)
+                ->sum('camera_count'),
+
+            'need_audit' => (clone $summaryBase)
+                ->where(function ($query) {
+                    $query->whereNull('last_checked_at')
+                        ->orWhere('last_checked_at', '<', now()->subDays(90));
+                })
+                ->count(),
+
+            'recently_checked' => (clone $summaryBase)
+                ->whereNotNull('last_checked_at')
+                ->where('last_checked_at', '>=', now()->subDays(90))
+                ->count(),
+
+            'audited' => (clone $summaryBase)
+                ->has('audits')
+                ->count(),
+        ];
+
+        $nvrSystems = $baseQuery
+            ->with(['site', 'organization', 'latestAudit'])
+            ->withCount('audits')
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('nvr-systems.index', compact(
+            'nvrSystems',
+            'summary',
+            'organizationId',
+            'siteId',
+            'needsAudit'
+        ));
     }
 
     public function create()
@@ -136,7 +204,10 @@ class NvrSystemController extends Controller
 
     private function currentUserIsChannelPartner(): bool
     {
-        return $this->currentOrganization()?->organization_type === 'channel_partner';
+        return in_array($this->currentOrganization()?->organization_type, [
+            'channel_partner',
+            'master_account',
+        ], true);
     }
 
     private function visibleOrganizationIds(): array
