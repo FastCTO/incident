@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\SinchSmsService;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
@@ -14,6 +17,8 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     protected $redirectTo = '/home';
+
+    private string $notificationEmail = 'vic@fsv.io';
 
     public function __construct()
     {
@@ -50,7 +55,7 @@ class RegisterController extends Controller
             'notes' => 'Organization created during public registration.',
         ]);
 
-        return User::create([
+        $user = User::create([
             'organization_id' => $organization->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -59,5 +64,44 @@ class RegisterController extends Controller
             'role_title' => 'Account Contact',
             'password' => Hash::make($data['password']),
         ]);
+
+        $this->sendRegistrationNotification($data, $organization, $user);
+
+        app(SinchSmsService::class)->sendAdminAlert(
+            "New FSV registration: {$user->name} / {$user->cell_phone} / {$user->email} / {$organization->name}"
+        );
+
+        return $user;
+    }
+
+    private function sendRegistrationNotification(array $data, Organization $organization, User $user): void
+    {
+        try {
+            $body = implode("\n", [
+                'New FSV Incident registration',
+                '',
+                'Name: ' . $user->name,
+                'Email: ' . $user->email,
+                'Phone: ' . ($user->cell_phone ?? '-'),
+                '',
+                'Organization: ' . $organization->name . ' (#' . $organization->id . ')',
+                'Organization Type: ' . $organization->organization_type,
+                'Organization Status: ' . $organization->status,
+                '',
+                'User ID: ' . $user->id,
+                'Submitted at: ' . now()->toDateTimeString(),
+            ]);
+
+            Mail::raw($body, function ($message) use ($organization) {
+                $message->to($this->notificationEmail)
+                    ->subject('FSV Incident Registration: ' . $organization->name);
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Registration notification email failed.', [
+                'error' => $e->getMessage(),
+                'organization_id' => $organization->id,
+                'user_id' => $user->id,
+            ]);
+        }
     }
 }
