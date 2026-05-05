@@ -36,6 +36,11 @@
                     <div class="nav-dropdown-menu">
                         <a href="{{ route('nvr-systems.index') }}">Video Source List</a>
                         <a href="{{ route('nvr-systems.create') }}">Add Video Source</a>
+
+                        <form method="POST" action="{{ route('demo.test-dvr-audit-alert') }}">
+                            @csrf
+                            <button type="submit" class="nav-dropdown-form-button">Send Test DVR Audit Alert</button>
+                        </form>
                     </div>
                 </div>
             @endif
