@@ -2,21 +2,87 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Incident;
 use App\Models\Organization;
+use App\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class OrganizationManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $organizations = Organization::with(['parentOrganization', 'childOrganizations'])
-            ->whereIn('id', $this->visibleOrganizationIds())
-            ->orderByRaw("FIELD(organization_type, 'platform_owner', 'channel_partner', 'customer', 'site_account')")
-            ->orderBy('name')
-            ->paginate(25);
+        $visibleOrganizationIds = $this->visibleOrganizationIds();
 
-        return view('organizations.index', compact('organizations'));
+        $summary = [
+            'total' => Organization::whereIn('id', $visibleOrganizationIds)->count(),
+
+            'channel_partners' => Organization::whereIn('id', $visibleOrganizationIds)
+                ->whereIn('organization_type', ['channel_partner', 'master_account'])
+                ->count(),
+
+            'customers' => Organization::whereIn('id', $visibleOrganizationIds)
+                ->whereIn('organization_type', ['customer', 'site_account'])
+                ->count(),
+        ];
+
+        $organizationsQuery = Organization::with(['parentOrganization'])
+            ->withCount(['childOrganizations', 'users', 'sites', 'incidents'])
+            ->whereIn('id', $visibleOrganizationIds);
+
+        $type = $request->query('type');
+        $parentOrganizationId = $request->query('parent_organization_id');
+
+        if ($type) {
+            if ($type === 'customer') {
+                $organizationsQuery->whereIn('organization_type', ['customer', 'site_account']);
+            } elseif ($type === 'channel_partner') {
+                $organizationsQuery->whereIn('organization_type', ['channel_partner', 'master_account']);
+            } elseif (in_array($type, ['platform_owner', 'master_account', 'site_account'], true)) {
+                $organizationsQuery->where('organization_type', $type);
+            }
+        } elseif ($parentOrganizationId) {
+            if (in_array((int) $parentOrganizationId, $visibleOrganizationIds, true)) {
+                $organizationsQuery->where('parent_organization_id', (int) $parentOrganizationId);
+            }
+        } else {
+            $organizationsQuery->whereIn('organization_type', [
+                'platform_owner',
+                'channel_partner',
+                'master_account',
+            ]);
+        }
+
+        $organizations = $organizationsQuery
+            ->orderByRaw("FIELD(organization_type, 'platform_owner', 'master_account', 'channel_partner', 'customer', 'site_account')")
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+
+        $organizations->getCollection()->transform(function ($organization) use ($visibleOrganizationIds) {
+            $childOrganizationIds = Organization::where('parent_organization_id', $organization->id)
+                ->whereIn('id', $visibleOrganizationIds)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+
+            $rollupOrganizationIds = array_values(array_unique(array_merge(
+                [(int) $organization->id],
+                $childOrganizationIds
+            )));
+
+            $organization->customer_accounts_count = Organization::whereIn('id', $childOrganizationIds)
+                ->whereIn('organization_type', ['customer', 'site_account'])
+                ->count();
+
+            $organization->rollup_sites_count = Site::whereIn('organization_id', $rollupOrganizationIds)->count();
+
+            $organization->rollup_incidents_count = Incident::whereIn('organization_id', $rollupOrganizationIds)->count();
+
+            return $organization;
+        });
+
+        return view('organizations.index', compact('organizations', 'summary', 'type', 'parentOrganizationId'));
     }
 
     public function create()
@@ -83,7 +149,7 @@ class OrganizationManagementController extends Controller
         if ($organization->childOrganizations()->count() > 0) {
             return redirect()
                 ->route('organizations.index')
-                ->with('success', 'Organization has child organizations and cannot be deleted.');
+                ->with('success', 'Organization has managed organizations and cannot be deleted.');
         }
 
         if ($organization->users()->count() > 0) {
@@ -143,7 +209,10 @@ class OrganizationManagementController extends Controller
 
     private function currentUserIsChannelPartner(): bool
     {
-        return $this->currentOrganization()?->organization_type === 'channel_partner';
+        return in_array($this->currentOrganization()?->organization_type, [
+            'channel_partner',
+            'master_account',
+        ], true);
     }
 
     private function visibleOrganizationIds(): array
@@ -178,8 +247,8 @@ class OrganizationManagementController extends Controller
         }
 
         if ($this->currentUserIsPlatformOwner()) {
-            return Organization::whereIn('organization_type', ['platform_owner', 'channel_partner'])
-                ->orderByRaw("FIELD(organization_type, 'platform_owner', 'channel_partner')")
+            return Organization::whereIn('organization_type', ['platform_owner', 'master_account', 'channel_partner'])
+                ->orderByRaw("FIELD(organization_type, 'platform_owner', 'master_account', 'channel_partner')")
                 ->orderBy('name')
                 ->get();
         }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentEvent;
+use App\Models\Organization;
 use App\Models\Site;
 use App\Support\OrganizationAccess;
 use Illuminate\Http\Request;
@@ -27,6 +28,8 @@ class IncidentController extends Controller
         $sort = $request->query('sort', 'datetime');
         $direction = $request->query('direction', 'desc');
         $showArchived = $request->boolean('archived');
+        $siteId = $request->query('site_id');
+        $organizationId = $request->query('organization_id');
 
         if (!array_key_exists($sort, $allowedSorts)) {
             $sort = 'datetime';
@@ -36,11 +39,74 @@ class IncidentController extends Controller
             $direction = 'desc';
         }
 
+        $visibleOrganizationIds = OrganizationAccess::visibleOrganizationIds();
+
+        $baseIncidentQuery = Incident::query()
+            ->whereIn('organization_id', $visibleOrganizationIds);
+
+        if ($organizationId && in_array((int) $organizationId, $visibleOrganizationIds, true)) {
+            $baseIncidentQuery->where('organization_id', (int) $organizationId);
+        }
+
+        if ($siteId && OrganizationAccess::canAccessSite((int) $siteId)) {
+            $baseIncidentQuery->where('site_id', (int) $siteId);
+        }
+
+        $summaryBase = clone $baseIncidentQuery;
+
+        $summary = [
+            'total' => (clone $summaryBase)->count(),
+
+            'active' => (clone $summaryBase)
+                ->whereNull('archived_at')
+                ->count(),
+
+            'archived' => (clone $summaryBase)
+                ->whereNotNull('archived_at')
+                ->count(),
+
+            'with_evidence' => (clone $summaryBase)
+                ->has('files')
+                ->count(),
+
+            'sites_with_incidents' => (clone $summaryBase)
+                ->whereNotNull('site_id')
+                ->distinct('site_id')
+                ->count('site_id'),
+
+            'sites_with_active_incidents' => (clone $summaryBase)
+                ->whereNull('archived_at')
+                ->whereNotNull('site_id')
+                ->distinct('site_id')
+                ->count('site_id'),
+
+            'organizations_with_incidents' => (clone $summaryBase)
+                ->whereNotNull('organization_id')
+                ->distinct('organization_id')
+                ->count('organization_id'),
+
+            'customers_with_incidents' => (clone $summaryBase)
+                ->whereHas('organization', function ($query) {
+                    $query->whereIn('organization_type', ['customer', 'site_account']);
+                })
+                ->whereNotNull('organization_id')
+                ->distinct('organization_id')
+                ->count('organization_id'),
+        ];
+
         $sortColumn = $allowedSorts[$sort];
 
         $incidentQuery = Incident::with(['organization', 'site'])
             ->withCount('files')
-            ->whereIn('organization_id', OrganizationAccess::visibleOrganizationIds());
+            ->whereIn('organization_id', $visibleOrganizationIds);
+
+        if ($organizationId && in_array((int) $organizationId, $visibleOrganizationIds, true)) {
+            $incidentQuery->where('organization_id', (int) $organizationId);
+        }
+
+        if ($siteId && OrganizationAccess::canAccessSite((int) $siteId)) {
+            $incidentQuery->where('site_id', (int) $siteId);
+        }
 
         if ($showArchived) {
             $incidentQuery->whereNotNull('archived_at');
@@ -54,7 +120,15 @@ class IncidentController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('incidents.index', compact('incidents', 'sort', 'direction', 'showArchived'));
+        return view('incidents.index', compact(
+            'incidents',
+            'sort',
+            'direction',
+            'showArchived',
+            'summary',
+            'siteId',
+            'organizationId'
+        ));
     }
 
     public function create()
@@ -355,10 +429,6 @@ class IncidentController extends Controller
             'You do not have access to this incident.'
         );
     }
-
-
-
-
 
     private function logIncidentEvent(Incident $incident, string $eventType, string $description, array $metadata = []): void
     {
