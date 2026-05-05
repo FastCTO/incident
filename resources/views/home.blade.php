@@ -1,29 +1,20 @@
 @extends('layouts.app')
 
+@section('title', 'Home - FSV Incident')
+
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Guardian Cloud Dashboard') }}</div>
+    <div class="card">
+        <div class="header-row">
+            <div>
+                <h1>FSV Incident</h1>
+                <p>Welcome back. Continue to your incident dashboard.</p>
 
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <p>{{ __('Welcome to Guardian Cloud!') }}</p>
-                    <p>{{ __("You don't have a room assigned. Please contact your administrator.") }}</p>
-
-                    <div class="text-center">
-                        <a href="{{ route('emergency.report') }}" class="btn btn-danger">Report Emergency</a>
-                    </div>
+                <div style="margin-top: 18px;">
+                    <a href="{{ route('incidents.index') }}" class="btn">Go to Incidents</a>
                 </div>
             </div>
+
+            <img src="{{ asset('images/fsvi-logo-w-words-412x415.webp') }}" alt="FSV Incident" class="logo">
         </div>
     </div>
-</div>
 @endsection
-

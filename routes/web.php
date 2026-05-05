@@ -12,6 +12,7 @@ use App\Http\Controllers\NvrSystemController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationManagementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FreeCheckupController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\VideoSourceAuditController;
 use App\Http\Controllers\VideoSourceAuditAttachmentController;
@@ -27,8 +28,18 @@ use App\Http\Controllers\VideoSourceAuditAddendumController;
 */
 
 Route::get('/', function () {
-    return redirect()->route('incidents.index');
+    if (Auth::check()) {
+        return redirect()->route('incidents.index');
+    }
+
+    return redirect()->route('login');
 });
+
+Route::get('/free-checkup', [FreeCheckupController::class, 'create'])
+    ->name('free-checkup.create');
+
+Route::post('/free-checkup', [FreeCheckupController::class, 'store'])
+    ->name('free-checkup.store');
 
 Auth::routes();
 
