@@ -19,11 +19,29 @@
     @endphp
 
     <style>
+        .incident-header-layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 1fr) minmax(520px, 2fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .incident-intro-list {
+            margin: 12px 0 0 0;
+            padding-left: 20px;
+            color: #374151;
+        }
+
+        .incident-intro-list li {
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+
         .incident-dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+            grid-template-columns: repeat(4, minmax(110px, 1fr));
             gap: 12px;
-            margin-top: 18px;
+            margin-top: 0;
         }
 
         .dash-pill {
@@ -152,16 +170,30 @@
             gap: 10px;
             align-items: center;
         }
+
+        @media (max-width: 1050px) {
+            .incident-header-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .incident-dashboard {
+                grid-template-columns: repeat(2, minmax(110px, 1fr));
+            }
+        }
     </style>
 
     <div class="card">
         <div class="header-row">
-            <div>
-                <h1>FSV Incident</h1>
-                <p>
-                    Track incidents, evidence files, archive status, customer/site context,
-                    and the beginning of chain-of-custody activity.
-                </p>
+            <div class="incident-header-layout">
+                <div>
+                    <h1>FSV Incident</h1>
+
+                    <ul class="incident-intro-list">
+                        <li>Track active incidents, archived incidents, and evidence activity.</li>
+                        <li>Review incidents by customer account, site, and status.</li>
+                        <li>Jump quickly into incident details, uploads, and chain-of-custody records.</li>
+                    </ul>
+                </div>
 
                 <div class="incident-dashboard">
                     <div class="dash-pill">
