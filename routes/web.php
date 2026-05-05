@@ -17,6 +17,8 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\VideoSourceAuditController;
 use App\Http\Controllers\VideoSourceAuditAttachmentController;
 use App\Http\Controllers\VideoSourceAuditAddendumController;
+use App\Http\Controllers\DemoNotificationController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,9 +50,8 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('incidents.index');
     })->name('home');
 
-    Route::get('/dashboard', function () {
-        return redirect()->route('incidents.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -69,6 +70,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('organizations', OrganizationManagementController::class)->except(['show']);
 
     Route::resource('nvr-systems', NvrSystemController::class)->except(['show']);
+
+    Route::post('/demo/test-dvr-audit-alert', [DemoNotificationController::class, 'sendDvrAuditAlert'])
+        ->name('demo.test-dvr-audit-alert');
+
 
     Route::get('/nvr-systems/{nvrSystem}/audits/create', [VideoSourceAuditController::class, 'create'])
         ->name('video-source-audits.create');
